@@ -1,0 +1,14 @@
+# Project exclude paths
+/Server/target/
+/.idea/.gitignore
+/.idea/.name
+/.idea/compiler.xml
+/.idea/misc.xml
+/.idea/vcs.xml
+/AOS_Project_1.pdf
+*/target/*
+/Utility/target/*
+/*Output.docx
+/Documentation/BugOutput.docx
+/Documentation/OutputFormat.txt
+/*.jar
