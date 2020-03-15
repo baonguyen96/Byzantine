@@ -1,10 +1,10 @@
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Hashtable;
+import java.util.List;
 import java.util.Random;
 
 public class ClientNode {
@@ -12,20 +12,54 @@ public class ClientNode {
     private int localTime;
     private String name;
     private Hashtable<String, Socket> serverSockets;
-    private Logger logger = new Logger(Logger.LogLevel.Release);
+    private Logger logger = new Logger(Logger.LogLevel.Debug);
 
-    public ClientNode(String name, ArrayList<ServerInfo> servers) throws IOException {
+    public ClientNode(String name, ArrayList<ServerInfo> servers) throws InterruptedException {
         this.name = name;
         localTime = 0;
         serverSockets = new Hashtable<>();
         populateServerSockets(servers);
     }
 
-    private void populateServerSockets(ArrayList<ServerInfo> servers) throws IOException {
-        for (ServerInfo server : servers) {
-            Socket socket = new Socket(server.getIpAddress(), server.getPort());
-            serverSockets.put(server.getName(), socket);
-            sendMessage(socket, String.format("Client '%s'", this.name));
+    private void populateServerSockets(ArrayList<ServerInfo> servers) throws InterruptedException {
+        for (int trial = 0; trial < 5; trial++) {
+            for (ServerInfo server : servers) {
+                if (serverSockets.containsKey(server.getName())) {
+                    continue;
+                }
+
+                logger.debug(String.format("%s tries to connect to %s...", name, server));
+
+                try {
+                    Socket socket = new Socket(server.getIpAddress(), server.getPort());
+                    sendMessage(socket, String.format("Client '%s'", this.name));
+                    serverSockets.put(server.getName(), socket);
+
+                    logger.debug(String.format("%s successfully connects to %s", name, server));
+                }
+                catch (IOException ignored) {
+                    logger.debug(String.format("%s fails to connect to %s - attempt %d", name, server, trial + 1));
+                }
+            }
+
+            if (serverSockets.keySet().size() == servers.size()) {
+                break;
+            }
+            else {
+                Thread.sleep(500);
+            }
+        }
+
+        if (serverSockets.size() == 0) {
+            logger.debug(String.format("%s cannot connect to any other servers", name));
+        }
+        else if (serverSockets.size() < servers.size()) {
+            String successfulServers = String.join(", ", serverSockets.keySet());
+            logger.debug(String.format("%s successfully connects to %s server(s): (%s)",
+                    name, serverSockets.size(), successfulServers));
+        }
+        else {
+            logger.debug(String.format("%s connect to all server(s)", name));
         }
     }
 
@@ -75,6 +109,32 @@ public class ClientNode {
         DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
         dos.writeUTF(message);
     }
+
+    private List<Integer> getServerNumbersForObject(String fileName) {
+        List<Integer> serverNumbers = new ArrayList<>();
+        int hashForObject = fileName.length() % 7;
+
+        serverNumbers.add(hashForObject);
+        serverNumbers.add((hashForObject + 1) % 7);
+        serverNumbers.add((hashForObject + 2) % 7);
+
+        return serverNumbers;
+    }
+
+    private boolean isServerReachable(int serverNumber) {
+        boolean isReachable = false;
+
+        try {
+            String serverName = (String) serverSockets.keySet().toArray()[serverNumber];
+            Socket serverSocket = serverSockets.get(serverName);
+            isReachable = serverSocket.getInetAddress().isReachable(10000);
+        }
+        catch (Exception ignored) {
+        }
+
+        return isReachable;
+    }
+
 
     private synchronized void incrementLocalTime() {
         localTime += TIME_DIFFERENCE_BETWEEN_PROCESSES;

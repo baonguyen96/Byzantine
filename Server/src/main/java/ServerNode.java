@@ -22,7 +22,7 @@ public class ServerNode {
     private PriorityQueue<Message> commandsQueue;
     private Hashtable<String, Socket> serverSockets;
     private ArrayList<ServerInfo> otherServers;
-    private Logger logger = new Logger(Logger.LogLevel.Release);
+    private Logger logger = new Logger(Logger.LogLevel.Debug);
 
     public ServerNode(ServerInfo serverInfo, ArrayList<ServerInfo> otherServerInfos, String directoryPath) throws IOException {
         this.localTime = 0;
@@ -267,7 +267,6 @@ public class ServerNode {
 
         logger.debug("Queue size after add = " + commandsQueue.size());
     }
-
 
     private synchronized void removeFromQueue(Predicate<Message> filter) {
         logger.debug("Removing messages off the queue");
