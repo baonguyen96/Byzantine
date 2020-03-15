@@ -10,8 +10,9 @@ public class Message implements Comparable<Message> {
         WriteSuccessAck,
         WriteFailureAck,
         ClientWriteRequest,
-        PingRequest,
-        PingResponse
+        ClientReadRequest,
+        ReadSuccessAck,
+        ReadFailureAck
     }
 
     private String senderName;
