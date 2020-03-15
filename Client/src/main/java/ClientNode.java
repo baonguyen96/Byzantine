@@ -6,6 +6,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class ClientNode {
+    @SuppressWarnings("FieldCanBeLocal")
+    private final boolean IS_DEBUGGING = true;
     private final int TIME_DIFFERENCE_BETWEEN_PROCESSES = 1;
     private int localTime;
     private String name;
@@ -62,26 +64,30 @@ public class ClientNode {
     }
 
     public void up() throws IOException, InterruptedException {
-        logger.log(String.format("'%s' starts", this.name));
+        logger.log(String.format("%s starts", this.name));
 
         Random random = new Random();
         boolean needToWrite = random.nextBoolean();
+        int fileNumber = random.nextInt(1000);
 
-        Thread.sleep(random.nextInt(1000));
+        if(IS_DEBUGGING) {
+            needToWrite = false;
+            fileNumber = 1;
+        }
+
+        Thread.sleep(random.nextInt(100));
 
         if (needToWrite) {
-            writeToServers();
+            writeToServers(fileNumber);
         }
         else {
-            readFromServers();
+            readFromServers(fileNumber);
         }
 
-        logger.log(String.format("'%s' gracefully exits", this.name));
+        logger.log(String.format("%s gracefully exits", this.name));
     }
 
-    private void writeToServers() throws IOException {
-        Random random = new Random();
-        int fileNumber = random.nextInt(100);
+    private void writeToServers(int fileNumber) throws IOException {
         List<Integer> serverNumbers = getServerNumbersForObject(fileNumber);
         List<Integer> reachableServerNumbers = new ArrayList<>();
 
@@ -112,9 +118,8 @@ public class ClientNode {
         }
     }
 
-    private void readFromServers() throws IOException {
+    private void readFromServers(int fileNumber) throws IOException {
         Random random = new Random();
-        int fileNumber = random.nextInt(100);
         List<Integer> serverNumbers = getServerNumbersForObject(fileNumber);
         int serverNumber =  serverNumbers.get(random.nextInt(serverNumbers.size()));
         String serverName = (String) serverSockets.keySet().toArray()[serverNumber];
@@ -158,10 +163,15 @@ public class ClientNode {
         List<Integer> serverNumbers = new ArrayList<>();
         int hashForObject = objectNumber % 7;
 
-        serverNumbers.add(hashForObject);
-        serverNumbers.add((hashForObject + 1) % 7);
-        serverNumbers.add((hashForObject + 2) % 7);
+        if(IS_DEBUGGING) {
+            serverNumbers.add(0);
+        }
+        else {
+            serverNumbers.add(hashForObject);
+            serverNumbers.add((hashForObject + 1) % 7);
+            serverNumbers.add((hashForObject + 2) % 7);
 
+        }
         return serverNumbers;
     }
 

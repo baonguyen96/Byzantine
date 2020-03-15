@@ -65,7 +65,13 @@ public class Message implements Comparable<Message> {
     }
 
     public String getDataFromPayload() {
-        return payload.substring(payload.indexOf('|') + 1);
+        String data = "";
+
+        if(payload.contains("|")) {
+            data = payload.substring(payload.indexOf('|') + 1);
+        }
+
+        return data;
     }
 
     @Override
