@@ -200,18 +200,16 @@ public class ServerNode {
             try {
                 String receivedMessageString = dis.readUTF();
                 Message receivedMessage = new Message(receivedMessageString);
+                String fileName = receivedMessage.getFileNameFromPayload();
+                Message responseMessage = null;
 
                 logger.log(String.format("%s receives '%s' from %s", this.info.getName(), receivedMessageString, receivedMessage.getSenderName()));
-
                 setLocalTime(receivedMessage.getTimeStamp());
                 incrementLocalTime();
 
-                String fileName = receivedMessage.getFileNameFromPayload();
-                Path fullPath = Paths.get(directoryPath, fileName).toAbsolutePath();
-                Message responseMessage;
-
-                if (FileUtil.exists(String.valueOf(fullPath))) {
+                if(receivedMessage.getType().equals(Message.MessageType.ClientWriteRequest)) {
                     Message writeAcquireRequest = new Message(this.info.getName(), Message.MessageType.WriteAcquireRequest, localTime, receivedMessage.getPayload());
+
                     addToQueue(writeAcquireRequest);
 
                     notifyAllServers(writeAcquireRequest);
@@ -223,9 +221,15 @@ public class ServerNode {
                     responseMessage = new Message(this.info.getName(), Message.MessageType.WriteSuccessAck, localTime, "");
                 }
                 else {
-                    incrementLocalTime();
+                    Path fullPath = Paths.get(directoryPath, fileName).toAbsolutePath();
 
-                    responseMessage = new Message(this.info.getName(), Message.MessageType.WriteFailureAck, localTime, "");
+                    if (FileUtil.exists(String.valueOf(fullPath))) {
+                        String content = FileUtil.readFromFile(fullPath.toString());
+                        responseMessage = new Message(this.info.getName(), Message.MessageType.ReadSuccessAck, localTime, content);
+                    }
+                    else {
+                        responseMessage = new Message(this.info.getName(), Message.MessageType.ReadFailureAck, localTime, String.format("File '%s' does not exist", fileName));
+                    }
                 }
 
                 sendMessage(socket, responseMessage.toString(), receivedMessage.getSenderName());

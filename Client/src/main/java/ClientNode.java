@@ -112,7 +112,6 @@ public class ClientNode {
         }
     }
 
-
     private void readFromServers() throws IOException {
         Random random = new Random();
         int fileNumber = random.nextInt(100);
@@ -127,7 +126,6 @@ public class ClientNode {
             logger.log(String.format("%s: %s cannot find file '%s'", name, serverName, message));
         }
     }
-
 
     private Message.MessageType requestServer(String serverName, Message.MessageType messageType, String messagePayload) throws IOException {
         incrementLocalTime();
@@ -180,7 +178,6 @@ public class ClientNode {
 
         return isReachable;
     }
-
 
     private synchronized void incrementLocalTime() {
         localTime += TIME_DIFFERENCE_BETWEEN_PROCESSES;
