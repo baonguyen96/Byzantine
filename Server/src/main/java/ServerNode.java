@@ -211,11 +211,8 @@ public class ServerNode {
                     Message writeAcquireRequest = new Message(this.info.getName(), Message.MessageType.WriteAcquireRequest, localTime, receivedMessage.getPayload());
 
                     addToQueue(writeAcquireRequest);
-
                     notifyAllServers(writeAcquireRequest);
-
                     processCriticalSession(writeAcquireRequest);
-
                     incrementLocalTime();
 
                     responseMessage = new Message(this.info.getName(), Message.MessageType.WriteSuccessAck, localTime, "");

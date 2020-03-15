@@ -22,7 +22,7 @@ public class ClientNode {
     }
 
     private void populateServerSockets(ArrayList<ServerInfo> servers) throws InterruptedException {
-        for (int trial = 0; trial < 5; trial++) {
+        for (int trial = 0; trial < 3; trial++) {
             for (ServerInfo server : servers) {
                 if (serverSockets.containsKey(server.getName())) {
                     continue;
@@ -67,21 +67,24 @@ public class ClientNode {
         logger.log(String.format("%s starts", this.name));
 
         Random random = new Random();
-        boolean needToWrite = random.nextBoolean();
-        int fileNumber = random.nextInt(1000);
 
-        if(IS_DEBUGGING) {
-            needToWrite = true;
-            fileNumber = 1;
-        }
+        for(int i = 0; i < 1; i++) {
+            boolean needToWrite = random.nextBoolean();
+            int fileNumber = random.nextInt(1000);
 
-        Thread.sleep(random.nextInt(100));
+            if(IS_DEBUGGING) {
+                needToWrite = true;
+                fileNumber = 0;
+            }
 
-        if (needToWrite) {
-            writeToServers(fileNumber);
-        }
-        else {
-            readFromServers(fileNumber);
+            Thread.sleep(random.nextInt(100));
+
+            if (needToWrite) {
+                writeToServers(fileNumber);
+            }
+            else {
+                readFromServers(fileNumber);
+            }
         }
 
         logger.log(String.format("%s gracefully exits", this.name));
@@ -97,8 +100,7 @@ public class ClientNode {
             }
         }
 
-        if (IS_DEBUGGING || reachableServerNumbers.size() >= 2) {
-            // do in sequence for now
+        if (reachableServerNumbers.size() >= 2) {
             for(int serverNumber : reachableServerNumbers) {
                 String serverName = (String) serverSockets.keySet().toArray()[serverNumber];
                 String message = String.format("File%d.txt|%s message #%d -- %s", fileNumber, this.name, 0, serverName);
@@ -107,14 +109,22 @@ public class ClientNode {
         }
         else {
             List<Integer> unreachableServerNumbers = serverNumbers.stream().filter(i -> !reachableServerNumbers.contains(i)).collect(Collectors.toList());
-            List<String> unreachableServerNames = new ArrayList<>();
+            String errorMessage = String.format("%s: Cannot write because of too many unreachable servers", name);
 
-            for(int unreachableServerNumber : unreachableServerNumbers) {
-                String serverName = (String) serverSockets.keySet().toArray()[unreachableServerNumber];
-                unreachableServerNames.add(serverName);
+            try {
+                List<String> unreachableServerNames = new ArrayList<>();
+
+                for (int unreachableServerNumber : unreachableServerNumbers) {
+                    String serverName = (String) serverSockets.keySet().toArray()[unreachableServerNumber];
+                    unreachableServerNames.add(serverName);
+                }
+
+                errorMessage = String.format("%s: (%s)", errorMessage, String.join(", ", unreachableServerNames));
+            }
+            catch(ArrayIndexOutOfBoundsException ignored) {
             }
 
-            logger.log(String.format("%s: Cannot write because of too many unreachable servers: (%s)", name, String.join(", ", unreachableServerNames)));
+            logger.log(errorMessage);
         }
     }
 
@@ -163,15 +173,10 @@ public class ClientNode {
         List<Integer> serverNumbers = new ArrayList<>();
         int hashForObject = objectNumber % 7;
 
-        if(IS_DEBUGGING) {
-            serverNumbers.add(0);
-        }
-        else {
-            serverNumbers.add(hashForObject);
-            serverNumbers.add((hashForObject + 1) % 7);
-            serverNumbers.add((hashForObject + 2) % 7);
+        serverNumbers.add(hashForObject);
+        serverNumbers.add((hashForObject + 1) % 7);
+        serverNumbers.add((hashForObject + 2) % 7);
 
-        }
         return serverNumbers;
     }
 
