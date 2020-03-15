@@ -31,6 +31,9 @@ public class ServerNode {
         this.otherServers = otherServerInfos;
         this.serverSockets = new Hashtable<>();
         this.commandsQueue = new PriorityQueue<>();
+
+        logger.debug(String.format("Ensure directory '%s' exists (absolute path = '%s')", directoryPath, new File(directoryPath).getAbsolutePath()));
+        FileUtil.createDirectory(directoryPath);
     }
 
     public void up() throws IOException {

@@ -12,3 +12,4 @@
 /Documentation/BugOutput.docx
 /Documentation/OutputFormat.txt
 /*.jar
+/Server/src/main/resources/Server*/*

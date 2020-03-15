@@ -71,7 +71,7 @@ public class ClientNode {
         int fileNumber = random.nextInt(1000);
 
         if(IS_DEBUGGING) {
-            needToWrite = false;
+            needToWrite = true;
             fileNumber = 1;
         }
 
@@ -97,7 +97,7 @@ public class ClientNode {
             }
         }
 
-        if (reachableServerNumbers.size() >= 2) {
+        if (IS_DEBUGGING || reachableServerNumbers.size() >= 2) {
             // do in sequence for now
             for(int serverNumber : reachableServerNumbers) {
                 String serverName = (String) serverSockets.keySet().toArray()[serverNumber];

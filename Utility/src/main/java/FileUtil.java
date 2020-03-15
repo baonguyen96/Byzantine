@@ -5,6 +5,20 @@ import java.nio.file.Paths;
 import java.util.stream.Stream;
 
 public class FileUtil {
+    public static boolean createDirectory(String path) {
+        File directory = new File(path);
+        boolean hasDirectory;
+
+        if(directory.exists()) {
+            hasDirectory = true;
+        }
+        else {
+            hasDirectory = directory.mkdir();
+        }
+
+        return hasDirectory;
+    }
+
     public static void appendToFile(String fileName, String line) throws IOException {
         FileWriter fileWriter = new FileWriter(fileName, true);
         PrintWriter printWriter = new PrintWriter(fileWriter);
