@@ -31,9 +31,6 @@ public class ServerNode {
         this.otherServers = otherServerInfos;
         this.serverSockets = new Hashtable<>();
         this.commandsQueue = new PriorityQueue<>();
-
-        logger.debug(String.format("Truncate directories '%s' (absolute path = '%s')", directoryPath, new File(directoryPath).getAbsolutePath()));
-        FileUtil.truncateAllFilesInDirectory(directoryPath);
     }
 
     public void up() throws IOException {
