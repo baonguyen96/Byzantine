@@ -24,7 +24,7 @@ public class ServerNode {
     private ArrayList<ServerInfo> otherServers;
     private Logger logger = new Logger(Logger.LogLevel.Debug);
 
-    public ServerNode(ServerInfo serverInfo, ArrayList<ServerInfo> otherServerInfos, String directoryPath) throws IOException {
+    public ServerNode(ServerInfo serverInfo, ArrayList<ServerInfo> otherServerInfos, String directoryPath) {
         this.localTime = 0;
         this.info = serverInfo;
         this.directoryPath = directoryPath;
@@ -112,6 +112,7 @@ public class ServerNode {
     private void listenForIncomingMessages(ServerSocket serverSocket) throws IOException {
         Socket incomingSocket;
 
+        //noinspection InfiniteLoopStatement
         while (true) {
             incomingSocket = serverSocket.accept();
             Socket finalSocket = incomingSocket;
