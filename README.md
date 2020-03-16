@@ -2,21 +2,15 @@
 
 ## Introduction
 
-Implement a distributed file replication system. Assuming no transport failure. More information on the problem [here](./Documentation/AOS_Project_1.pdf).
+**TO BE WRITTEN**
 
 ## Requirements
-
-**System requirements:**
 
 1. Java 8 or higher
 2. JDK 8 or higher
 3. JRE 1.8 or higher
 4. Maven
 5. Windows 10 and/or Ubuntu LTS 18.4 (tested)
-
-**Files requirements:**
-
-1. Each server's directory that stores the files to be written to by the Clients must be in this format: `File#.txt` (i.e. `File1.txt`, `File2.txt`, etc.) as samples [here](./Server/src/main/resources/Server1/)
 
 ## How to run
 
@@ -54,3 +48,7 @@ A set of automated PowerShell scripts are provided to automatically run all serv
 2. Run `./Build-Local.ps1` to build the entire project
 3. Run `./Start-Local-Server.ps1` to start all (3) server instances
 4. Run `./Start-Local-Client.ps1` to start all (5) client instances
+
+## Project Documentation
+
+See [Documentation](./Documentation/Documentation.md) for more explanation on project design, architecture, and proof of correctness.
