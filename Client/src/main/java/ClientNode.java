@@ -71,9 +71,9 @@ public class ClientNode {
 
         Random random = new Random();
 
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < 20; i++) {
             boolean needToWrite = random.nextBoolean();
-            int fileNumber = random.nextInt(3);
+            int fileNumber = random.nextInt(5);
 
 //            if (IS_DEBUGGING) {
 //                needToWrite = true;
@@ -123,8 +123,8 @@ public class ClientNode {
                 unreachableServerNames.add(serverName);
             }
 
-            String errorMessage = String.format("%s: Cannot write to '%s' because of too many unreachable servers (%s)",
-                    name, fileName, String.join(", ", unreachableServerNames));
+            String errorMessage = String.format("%s: Cannot write to '%s' because of too many (%d) unreachable servers (%s)",
+                    name, fileName, unreachableServerNames.size(), String.join(", ", unreachableServerNames));
             logger.log(errorMessage);
         }
     }
