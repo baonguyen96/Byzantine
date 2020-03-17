@@ -2,7 +2,7 @@
 
 ## Introduction
 
-**TO BE WRITTEN**
+Implement a distributed system where multiple clients can connect to multiple servers concurrently and request read or write. Communication channels are FIFO and reliable when they are operational; but occasionally they may be disrupted in which case no message can be communicated across that channel. More information can be found [here](./Documentation/project2.pdf).
 
 ## Requirements
 
