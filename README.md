@@ -47,9 +47,11 @@ A set of automated PowerShell scripts are provided to automatically run all serv
 1. Go to [Scripts](./Scripts) directory using PowerShell
 2. Run `./Build-Local.ps1` to build the entire project
 3. Run `./Reset-Local-Server.ps1` to reset all directories of all servers
-4. Run `./Start-Local-Server.ps1` to start all (3) server instances
-5. Run `./Start-Local-Client.ps1` to start all (5) client instances
+4. Run `./Start-Local-Server.ps1` to start all server instances
+5. Run `./Start-Local-Client.ps1` to start all client instances
 
 ## Project Documentation
 
 See [Documentation](./Documentation/Documentation.md) for more explanation on project design, architecture, and proof of correctness.
+
+Build upon [LamportClock](https://github.com/baonguyen96/LamportClock) project.

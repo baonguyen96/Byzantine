@@ -156,7 +156,7 @@ public class ClientNode {
         }
 
         if(!didRead) {
-            logger.log(String.format("%s cannot reach any server (%s) to  reach file '%s'",
+            logger.log(String.format("%s cannot reach any server (%s) to read file '%s'",
                     name, String.join(", ", unreachableServerNames) , fileName));
         }
     }

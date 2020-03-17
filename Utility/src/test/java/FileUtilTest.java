@@ -6,7 +6,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class FileUtilTest {
     @Disabled
     @Test
-    void appendToFile() {
+    void testAppendToFile() {
         try {
             String filePath = "./src/test/resources/FileUtil/Test1.txt";
             FileUtil.appendToFile(filePath, "New line from unit test");
@@ -29,9 +29,9 @@ class FileUtilTest {
     }
 
     @Test
-    void readFromFile() {
+    void testGetFileContent() {
         String filePath = "./src/test/resources/FileUtil/Test.txt";
-        String content = FileUtil.readFromFile(filePath);
+        String content = FileUtil.getFileContent(filePath);
         assertEquals("Test file", content);
     }
 }

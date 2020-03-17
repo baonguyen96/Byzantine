@@ -31,7 +31,7 @@ public class FileUtil {
         return file.exists();
     }
 
-    public static String readFromFile(String fileName) {
+    public static String getFileContent(String fileName) {
         String content = "";
 
         try (Stream<String> stream = Files.lines(Paths.get(fileName), StandardCharsets.UTF_8)) {

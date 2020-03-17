@@ -221,7 +221,7 @@ public class ServerNode {
                     Path fullPath = Paths.get(directoryPath, fileName).toAbsolutePath();
 
                     if (FileUtil.exists(String.valueOf(fullPath))) {
-                        String content = FileUtil.readFromFile(fullPath.toString());
+                        String content = FileUtil.getFileContent(fullPath.toString());
                         responseMessage = new Message(this.info.getName(), Message.MessageType.ReadSuccessAck, localTime, content);
                     }
                     else {
