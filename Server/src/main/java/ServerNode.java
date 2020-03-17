@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 
 public class ServerNode {
     private final int TIME_DIFFERENCE_BETWEEN_PROCESSES = 1;
-    private Logger logger = new Logger(Logger.LogLevel.Debug);
+    private Logger logger = new Logger(Logger.LogLevel.Release);
     private int localTime;
     private ServerInfo info;
     private String directoryPath;

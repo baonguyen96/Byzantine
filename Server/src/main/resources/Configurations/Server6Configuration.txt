@@ -1,3 +1,3 @@
 .\Server\src\main\resources\Server6
 server6:localhost:1376
-server0:localhost:1370|server1:localhost:1371|server2:localhost:1372|server4:localhost:1374|server5:localhost:1375
+server0:localhost:1370|server1:localhost:1371|server2:localhost:1372|server3:localhost:1373|server4:localhost:1374|server5:localhost:1375
