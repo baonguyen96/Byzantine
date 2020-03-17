@@ -8,7 +8,7 @@ import java.util.stream.Collectors;
 public class ClientNode {
     @SuppressWarnings("FieldCanBeLocal")
     private final boolean IS_DEBUGGING = false;
-    private Logger logger = new Logger(Logger.LogLevel.Debug);
+    private Logger logger = new Logger(Logger.LogLevel.Release);
     private final int TIME_DIFFERENCE_BETWEEN_PROCESSES = 1;
     private int localTime;
     private String name;

@@ -360,3 +360,48 @@ private Logger logger = new Logger(Logger.LogLevel.Release);
 
 Follow [these steps](../README.md#how-to-run) to build and run.
 
+Servers' outputs are the same as before so I will not show here. Clients' outputs are a little different since now they have both read and write commands. Here is a sample:
+```text
+> client0 starts at time: 2020-03-16 at 23:11:35.400 CDT
+> client0 sends 'client0|ClientReadRequest|1|File2.txt' to server3 at time: 2020-03-16 at 23:11:35.731 CDT
+> client0 receives 'server3|ReadSuccessAck|3|client4 message #10' from server3 at time: 2020-03-16 at 23:11:35.736 CDT
+> client0 sends 'client0|ClientReadRequest|6|File8.txt' to server3 at time: 2020-03-16 at 23:11:36.130 CDT
+> client0 receives 'server3|ReadSuccessAck|8|client2 message #13{newLine}client0 message #6' from server3 at time: 2020-03-16 at 23:11:36.132 CDT
+> client0 sends 'client0|ClientWriteRequest|11|File7.txt|client0 message #2' to server1 at time: 2020-03-16 at 23:11:36.308 CDT
+> client0 receives 'server1|WriteSuccessAck|22|' from server1 at time: 2020-03-16 at 23:11:36.318 CDT
+> client0 sends 'client0|ClientWriteRequest|25|File7.txt|client0 message #2' to server2 at time: 2020-03-16 at 23:11:36.318 CDT
+> client0 receives 'server2|WriteSuccessAck|36|' from server2 at time: 2020-03-16 at 23:11:36.326 CDT
+> client0 cannot reach any server (server4, server5, server6) to  reach file 'File11.txt' at time: 2020-03-16 at 23:11:36.781 CDT
+> client0 sends 'client0|ClientReadRequest|39|File10.txt' to server3 at time: 2020-03-16 at 23:11:37.016 CDT
+> client0 receives 'server3|ReadSuccessAck|41|client3 message #5' from server3 at time: 2020-03-16 at 23:11:37.018 CDT
+> client0 sends 'client0|ClientWriteRequest|44|File1.txt|client0 message #5' to server1 at time: 2020-03-16 at 23:11:37.079 CDT
+> client0 receives 'server1|WriteSuccessAck|55|' from server1 at time: 2020-03-16 at 23:11:37.185 CDT
+> client0 sends 'client0|ClientWriteRequest|58|File1.txt|client0 message #5' to server2 at time: 2020-03-16 at 23:11:37.185 CDT
+> client0 receives 'server2|WriteSuccessAck|69|' from server2 at time: 2020-03-16 at 23:11:37.288 CDT
+> client0 sends 'client0|ClientWriteRequest|72|File1.txt|client0 message #5' to server3 at time: 2020-03-16 at 23:11:37.289 CDT
+> client0 receives 'server3|WriteSuccessAck|83|' from server3 at time: 2020-03-16 at 23:11:37.295 CDT
+> client0 sends 'client0|ClientReadRequest|86|File10.txt' to server3 at time: 2020-03-16 at 23:11:37.744 CDT
+> client0 receives 'server3|ReadSuccessAck|88|client3 message #5' from server3 at time: 2020-03-16 at 23:11:37.745 CDT
+> client0: Cannot write to 'File12.txt' because of too many (3) unreachable servers (server5, server6, server0) at time: 2020-03-16 at 23:11:38.226 CDT
+> client0: Cannot write to 'File19.txt' because of too many (3) unreachable servers (server5, server6, server0) at time: 2020-03-16 at 23:11:38.529 CDT
+> client0 cannot reach any server (server6, server5, server4) to  reach file 'File11.txt' at time: 2020-03-16 at 23:11:38.582 CDT
+> client0 sends 'client0|ClientReadRequest|91|File7.txt' to server2 at time: 2020-03-16 at 23:11:38.792 CDT
+> client0 receives 'server2|ReadSuccessAck|93|client0 message #19{newLine}client0 message #2' from server2 at time: 2020-03-16 at 23:11:38.794 CDT
+> client0 sends 'client0|ClientReadRequest|96|File2.txt' to server2 at time: 2020-03-16 at 23:11:39.030 CDT
+> client0 receives 'server2|ReadSuccessAck|98|client4 message #10' from server2 at time: 2020-03-16 at 23:11:39.032 CDT
+> client0 sends 'client0|ClientReadRequest|101|File7.txt' to server1 at time: 2020-03-16 at 23:11:39.474 CDT
+> client0 receives 'server1|ReadSuccessAck|103|client0 message #19{newLine}client0 message #2' from server1 at time: 2020-03-16 at 23:11:39.476 CDT
+> client0 sends 'client0|ClientReadRequest|106|File3.txt' to server3 at time: 2020-03-16 at 23:11:39.970 CDT
+> client0 receives 'server3|ReadSuccessAck|108|client2 message #7{newLine}client1 message #18{newLine}client3 message #16' from server3 at time: 2020-03-16 at 23:11:39.971 CDT
+> client0 cannot reach any server (server5, server4, server6) to  reach file 'File18.txt' at time: 2020-03-16 at 23:11:40.352 CDT
+> client0: Cannot write to 'File13.txt' because of too many (2) unreachable servers (server6, server0) at time: 2020-03-16 at 23:11:40.462 CDT
+> client0 cannot reach any server (server4, server6, server5) to  reach file 'File11.txt' at time: 2020-03-16 at 23:11:40.862 CDT
+> client0: Cannot write to 'File17.txt' because of too many (2) unreachable servers (server4, server5) at time: 2020-03-16 at 23:11:41.318 CDT
+> client0 sends 'client0|ClientReadRequest|111|File9.txt' to server2 at time: 2020-03-16 at 23:11:41.608 CDT
+> client0 receives 'server2|ReadSuccessAck|113|client1 message #1{newLine}client3 message #11{newLine}client2 message #19{newLine}client3 message #17' from server2 at time: 2020-03-16 at 23:11:41.610 CDT
+> client0 sends 'client0|ClientWriteRequest|116|File14.txt|client0 message #19' to server1 at time: 2020-03-16 at 23:11:41.781 CDT
+> client0 receives 'server1|WriteSuccessAck|127|' from server1 at time: 2020-03-16 at 23:11:41.884 CDT
+> client0 sends 'client0|ClientWriteRequest|130|File14.txt|client0 message #19' to server2 at time: 2020-03-16 at 23:11:41.884 CDT
+> client0 receives 'server2|WriteSuccessAck|141|' from server2 at time: 2020-03-16 at 23:11:41.986 CDT
+> client0 gracefully exits at time: 2020-03-16 at 23:11:41.986 CDT
+```
