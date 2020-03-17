@@ -7,22 +7,20 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Hashtable;
-import java.util.List;
-import java.util.PriorityQueue;
+import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class ServerNode {
     private final int TIME_DIFFERENCE_BETWEEN_PROCESSES = 1;
+    private Logger logger = new Logger(Logger.LogLevel.Debug);
     private int localTime;
     private ServerInfo info;
     private String directoryPath;
     private PriorityQueue<Message> commandsQueue;
     private Hashtable<String, Socket> serverSockets;
     private ArrayList<ServerInfo> otherServers;
-    private Logger logger = new Logger(Logger.LogLevel.Debug);
+    private HashSet<String> processedMessagesToAppendToFile;
 
     public ServerNode(ServerInfo serverInfo, ArrayList<ServerInfo> otherServerInfos, String directoryPath) {
         this.localTime = 0;
@@ -31,6 +29,7 @@ public class ServerNode {
         this.otherServers = otherServerInfos;
         this.serverSockets = new Hashtable<>();
         this.commandsQueue = new PriorityQueue<>();
+        this.processedMessagesToAppendToFile = new HashSet<>();
 
         logger.debug(String.format("Ensure directory '%s' exists (absolute path = '%s')", directoryPath, new File(directoryPath).getAbsolutePath()));
         FileUtil.createDirectory(directoryPath);
@@ -349,9 +348,17 @@ public class ServerNode {
     }
 
     private synchronized void appendToFile(String fileName, String message) throws IOException {
-        logger.log(String.format("%s appends '%s' to file %s", this.info.getName(), message, fileName));
+        String combo = String.format("%s|%s", fileName, message);
 
-        Path filePath = Paths.get(directoryPath, fileName).toAbsolutePath();
-        FileUtil.appendToFile(String.valueOf(filePath), message);
+        if(processedMessagesToAppendToFile.contains(combo)) {
+            logger.debug(String.format("%s already appended '%s' to file '%s'. Skipping...", this.info.getName(), message, fileName));
+        }
+        else {
+            logger.log(String.format("%s appends '%s' to file '%s'", this.info.getName(), message, fileName));
+
+            Path filePath = Paths.get(directoryPath, fileName).toAbsolutePath();
+            FileUtil.appendToFile(String.valueOf(filePath), message);
+            processedMessagesToAppendToFile.add(combo);
+        }
     }
 }
