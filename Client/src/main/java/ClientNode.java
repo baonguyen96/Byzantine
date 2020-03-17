@@ -7,12 +7,12 @@ import java.util.stream.Collectors;
 
 public class ClientNode {
     @SuppressWarnings("FieldCanBeLocal")
-    private final boolean IS_DEBUGGING = true;
+    private final boolean IS_DEBUGGING = false;
+    private Logger logger = new Logger(Logger.LogLevel.Debug);
     private final int TIME_DIFFERENCE_BETWEEN_PROCESSES = 1;
     private int localTime;
     private String name;
     private LinkedHashMap<String, Socket> serverSockets;
-    private Logger logger = new Logger(Logger.LogLevel.Release);
 
     public ClientNode(String name, ArrayList<ServerInfo> servers) throws InterruptedException {
         this.name = name;
@@ -73,12 +73,12 @@ public class ClientNode {
 
         for (int i = 0; i < 20; i++) {
             boolean needToWrite = random.nextBoolean();
-            int fileNumber = random.nextInt(5);
+            int fileNumber = random.nextInt(20);
 
-//            if (IS_DEBUGGING) {
-//                needToWrite = true;
-//                fileNumber = 0;
-//            }
+            if (IS_DEBUGGING) {
+                needToWrite = true;
+                fileNumber = random.nextInt(10);
+            }
 
             Thread.sleep(random.nextInt(500));
 
@@ -107,7 +107,7 @@ public class ClientNode {
         if (reachableServerNumbers.size() >= 2) {
             for (int serverNumber : reachableServerNumbers) {
                 String serverName = (String) serverSockets.keySet().toArray()[serverNumber];
-                String message = String.format("%s|%s message #%d -- %s", fileName, this.name, messageCount, serverName);
+                String message = String.format("%s|%s message #%d", fileName, this.name, messageCount);
                 requestServer(serverName, Message.MessageType.ClientWriteRequest, message);
             }
         }
@@ -130,21 +130,34 @@ public class ClientNode {
     }
 
     private void readFromServers(int fileNumber) throws IOException {
-        Random random = new Random();
-        List<Integer> serverNumbers = getServerNumbersForObject(fileNumber);
-        int serverNumber = serverNumbers.get(random.nextInt(serverNumbers.size()));
-        String serverName = (String) serverSockets.keySet().toArray()[serverNumber];
+        boolean didRead = false;
+        List<String> unreachableServerNames = new ArrayList<>();
         String fileName = String.format("File%d.txt", fileNumber);
+        List<Integer> serverNumbers = getServerNumbersForObject(fileNumber);
+        Collections.shuffle(serverNumbers);
 
-        if (isServerReachable(serverNumber)) {
-            Message.MessageType responseType = requestServer(serverName, Message.MessageType.ClientReadRequest, fileName);
+        for(int serverNumber : serverNumbers) {
+            String serverName = (String) serverSockets.keySet().toArray()[serverNumber];
 
-            if (responseType.equals(Message.MessageType.ReadFailureAck)) {
-                logger.log(String.format("%s: %s cannot find file '%s'", name, serverName, fileName));
+            if (isServerReachable(serverNumber)) {
+                Message.MessageType responseType = requestServer(serverName, Message.MessageType.ClientReadRequest, fileName);
+
+                if (responseType.equals(Message.MessageType.ReadFailureAck)) {
+                    logger.log(String.format("%s: %s cannot find file '%s'", name, serverName, fileName));
+                }
+
+                didRead = true;
+                break;
+            }
+            else {
+                logger.debug(String.format("%s: %s is unreachable to read file '%s'", name, serverName, fileName));
+                unreachableServerNames.add(serverName);
             }
         }
-        else {
-            logger.log(String.format("%s: %s is unreachable to read file '%s'", name, serverName, fileName));
+
+        if(!didRead) {
+            logger.log(String.format("%s cannot reach any server (%s) to  reach file '%s'",
+                    name, String.join(", ", unreachableServerNames) , fileName));
         }
     }
 
