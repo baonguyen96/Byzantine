@@ -363,6 +363,8 @@ I still use the same settings as the previous test, except that this time I enab
 
 # Production
 
+Now that individual cases are proven, we can put them all together and run a production test that includes every cases possible.
+
 To enable full production workflow (multiple clients connect to multiple servers simultaneously with read/write requests and no debugging outputs), change the followings:
 
 [ClientNode](../Client/src/main/java/ClientNode.java):
@@ -378,193 +380,425 @@ private Logger logger = new Logger(Logger.LogLevel.Release);
 
 Follow [these steps](../README.md#how-to-run) to build and run.
 
-Here is sample of client's output:
+I prepared some sample configurations for the [clients](../Client/src/main/resources/Configurations) and the [servers](../Server/src/main/resources/Configurations). Here is the setup:
+
+![Production setup](./Img/ProductionSetup.PNG)
+
+All servers can connect to each other. Clients are partitioned into 2 groups from the get-go: clients (0, 1, 2) can connect to all servers, thus guarantee all writable, and clients (3, 4) can only connect to 2 servers as in the diagram above. For these clients, since the servers that they connect to are more than 2 "hops" apart, they are guaranteed to never be writable. You can achieve the same setup if you let all clients be able to connect to all servers at the beginning, then at the network level enable and disable the channels at will, which requires a lot of manual work to fiddle around, and timing is also critical. Since I don't have the tools (virtual environment) and resources, this is my approach.
+
+_Server0_ outputs:
 ```text
-> client4 starts at time: 2020-03-20 at 17:35:34.926 CDT
-> client4 sends 'client4|ClientWriteRequest|1|File19.txt|client4 message #0' to server5 at time: 2020-03-20 at 17:35:35.166 CDT
-> client4 receives 'server5|WriteSuccessAck|94|' from server5 at time: 2020-03-20 at 17:35:35.487 CDT
-> client4 sends 'client4|ClientWriteRequest|97|File19.txt|client4 message #0' to server6 at time: 2020-03-20 at 17:35:35.490 CDT
-> client4 receives 'server6|WriteSuccessAck|147|' from server6 at time: 2020-03-20 at 17:35:35.779 CDT
-> client4 sends 'client4|ClientWriteRequest|150|File19.txt|client4 message #0' to server0 at time: 2020-03-20 at 17:35:35.779 CDT
-> client4 receives 'server0|WriteSuccessAck|169|' from server0 at time: 2020-03-20 at 17:35:35.926 CDT
-> client4 sends 'client4|ClientReadRequest|172|File6.txt' to server6 at time: 2020-03-20 at 17:35:36.281 CDT
-> client4 receives 'server6|ReadSuccessAck|218|client2 message #1' from server6 at time: 2020-03-20 at 17:35:36.296 CDT
-> client4 sends 'client4|ClientWriteRequest|221|File1.txt|client4 message #2' to server1 at time: 2020-03-20 at 17:35:36.385 CDT
-> client4 receives 'server1|WriteSuccessAck|294|' from server1 at time: 2020-03-20 at 17:35:36.631 CDT
-> client4 sends 'client4|ClientWriteRequest|297|File1.txt|client4 message #2' to server2 at time: 2020-03-20 at 17:35:36.632 CDT
-> client4 receives 'server2|WriteSuccessAck|337|' from server2 at time: 2020-03-20 at 17:35:36.763 CDT
-> client4 sends 'client4|ClientWriteRequest|340|File1.txt|client4 message #2' to server3 at time: 2020-03-20 at 17:35:36.763 CDT
-> client4 receives 'server3|WriteSuccessAck|368|' from server3 at time: 2020-03-20 at 17:35:36.903 CDT
-> client4 sends 'client4|ClientWriteRequest|371|File2.txt|client4 message #3' to server2 at time: 2020-03-20 at 17:35:37.334 CDT
-> client4 receives 'server2|WriteSuccessAck|506|' from server2 at time: 2020-03-20 at 17:35:37.483 CDT
-> client4 sends 'client4|ClientWriteRequest|509|File2.txt|client4 message #3' to server3 at time: 2020-03-20 at 17:35:37.484 CDT
-> client4 receives 'server3|WriteSuccessAck|550|' from server3 at time: 2020-03-20 at 17:35:37.714 CDT
-> client4 sends 'client4|ClientWriteRequest|553|File2.txt|client4 message #3' to server4 at time: 2020-03-20 at 17:35:37.714 CDT
-> client4 receives 'server4|WriteSuccessAck|583|' from server4 at time: 2020-03-20 at 17:35:37.845 CDT
-> client4 sends 'client4|ClientWriteRequest|586|File12.txt|client4 message #4' to server5 at time: 2020-03-20 at 17:35:38.326 CDT
-> client4 receives 'server5|WriteSuccessAck|706|' from server5 at time: 2020-03-20 at 17:35:38.575 CDT
-> client4 sends 'client4|ClientWriteRequest|709|File12.txt|client4 message #4' to server6 at time: 2020-03-20 at 17:35:38.576 CDT
-> client4 receives 'server6|WriteSuccessAck|738|' from server6 at time: 2020-03-20 at 17:35:38.708 CDT
-> client4 sends 'client4|ClientWriteRequest|741|File12.txt|client4 message #4' to server0 at time: 2020-03-20 at 17:35:38.708 CDT
-> client4 receives 'server0|WriteSuccessAck|758|' from server0 at time: 2020-03-20 at 17:35:38.840 CDT
-> client4 sends 'client4|ClientWriteRequest|761|File17.txt|client4 message #5' to server3 at time: 2020-03-20 at 17:35:39.065 CDT
-> client4 receives 'server3|WriteSuccessAck|824|' from server3 at time: 2020-03-20 at 17:35:39.198 CDT
-> client4 sends 'client4|ClientWriteRequest|827|File17.txt|client4 message #5' to server4 at time: 2020-03-20 at 17:35:39.198 CDT
-> client4 receives 'server4|WriteSuccessAck|884|' from server4 at time: 2020-03-20 at 17:35:39.435 CDT
-> client4 sends 'client4|ClientWriteRequest|887|File17.txt|client4 message #5' to server5 at time: 2020-03-20 at 17:35:39.437 CDT
-> client4 receives 'server5|WriteSuccessAck|914|' from server5 at time: 2020-03-20 at 17:35:39.572 CDT
-> client4 sends 'client4|ClientWriteRequest|917|File7.txt|client4 message #6' to server0 at time: 2020-03-20 at 17:35:39.687 CDT
-> client4 receives 'server0|WriteSuccessAck|954|' from server0 at time: 2020-03-20 at 17:35:39.838 CDT
-> client4 sends 'client4|ClientWriteRequest|957|File7.txt|client4 message #6' to server1 at time: 2020-03-20 at 17:35:39.840 CDT
-> client4 receives 'server1|WriteSuccessAck|974|' from server1 at time: 2020-03-20 at 17:35:39.976 CDT
-> client4 sends 'client4|ClientWriteRequest|977|File7.txt|client4 message #6' to server2 at time: 2020-03-20 at 17:35:39.976 CDT
-> client4 receives 'server2|WriteSuccessAck|1002|' from server2 at time: 2020-03-20 at 17:35:40.112 CDT
-> client4 sends 'client4|ClientReadRequest|1005|File6.txt' to server0 at time: 2020-03-20 at 17:35:40.441 CDT
-> client4 receives 'server0|ReadSuccessAck|1095|client2 message #1' from server0 at time: 2020-03-20 at 17:35:40.445 CDT
-> client4 sends 'client4|ClientReadRequest|1098|File3.txt' to server5 at time: 2020-03-20 at 17:35:40.937 CDT
-> client4 receives 'server5|ReadSuccessAck|1157|client1 message #7' from server5 at time: 2020-03-20 at 17:35:40.951 CDT
-> client4 sends 'client4|ClientWriteRequest|1160|File11.txt|client4 message #9' to server4 at time: 2020-03-20 at 17:35:41.204 CDT
-> client4 receives 'server4|WriteSuccessAck|1221|' from server4 at time: 2020-03-20 at 17:35:41.374 CDT
-> client4 sends 'client4|ClientWriteRequest|1224|File11.txt|client4 message #9' to server5 at time: 2020-03-20 at 17:35:41.375 CDT
-> client4 receives 'server5|WriteSuccessAck|1279|' from server5 at time: 2020-03-20 at 17:35:41.759 CDT
-> client4 sends 'client4|ClientWriteRequest|1282|File11.txt|client4 message #9' to server6 at time: 2020-03-20 at 17:35:41.761 CDT
-> client4 receives 'server6|WriteSuccessAck|1311|' from server6 at time: 2020-03-20 at 17:35:41.926 CDT
-> client4 sends 'client4|ClientReadRequest|1314|File18.txt' to server6 at time: 2020-03-20 at 17:35:42.400 CDT
-> client4 receives 'server6|ReadSuccessAck|1376|client3 message #4' from server6 at time: 2020-03-20 at 17:35:42.411 CDT
-> client4 sends 'client4|ClientReadRequest|1379|File11.txt' to server5 at time: 2020-03-20 at 17:35:42.422 CDT
-> client4 receives 'server5|ReadSuccessAck|1384|client1 message #0{newLine}client2 message #0{newLine}client1 message #0{newLine}client4 message #9' from server5 at time: 2020-03-20 at 17:35:42.428 CDT
-> client4 sends 'client4|ClientReadRequest|1387|File18.txt' to server4 at time: 2020-03-20 at 17:35:42.663 CDT
-> client4 receives 'server4|ReadSuccessAck|1426|client3 message #4' from server4 at time: 2020-03-20 at 17:35:42.669 CDT
-> client4 sends 'client4|ClientWriteRequest|1429|File6.txt|client4 message #13' to server6 at time: 2020-03-20 at 17:35:43.155 CDT
-> client4 receives 'server6|WriteSuccessAck|1537|' from server6 at time: 2020-03-20 at 17:35:43.303 CDT
-> client4 sends 'client4|ClientWriteRequest|1540|File6.txt|client4 message #13' to server0 at time: 2020-03-20 at 17:35:43.304 CDT
-> client4 receives 'server0|WriteSuccessAck|1591|' from server0 at time: 2020-03-20 at 17:35:43.471 CDT
-> client4 sends 'client4|ClientWriteRequest|1594|File6.txt|client4 message #13' to server1 at time: 2020-03-20 at 17:35:43.472 CDT
-> client4 receives 'server1|WriteSuccessAck|1618|' from server1 at time: 2020-03-20 at 17:35:43.639 CDT
-> client4 sends 'client4|ClientWriteRequest|1621|File1.txt|client4 message #14' to server1 at time: 2020-03-20 at 17:35:44.013 CDT
-> client4 receives 'server1|WriteSuccessAck|1710|' from server1 at time: 2020-03-20 at 17:35:44.249 CDT
-> client4 sends 'client4|ClientWriteRequest|1713|File1.txt|client4 message #14' to server2 at time: 2020-03-20 at 17:35:44.249 CDT
-> client4 receives 'server2|WriteSuccessAck|1746|' from server2 at time: 2020-03-20 at 17:35:44.391 CDT
-> client4 sends 'client4|ClientWriteRequest|1749|File1.txt|client4 message #14' to server3 at time: 2020-03-20 at 17:35:44.391 CDT
-> client4 receives 'server3|WriteSuccessAck|1767|' from server3 at time: 2020-03-20 at 17:35:44.525 CDT
-> client4 sends 'client4|ClientReadRequest|1770|File8.txt' to server2 at time: 2020-03-20 at 17:35:44.649 CDT
-> client4 receives 'server2|ReadSuccessAck|1788|client0 message #2' from server2 at time: 2020-03-20 at 17:35:44.662 CDT
-> client4 sends 'client4|ClientReadRequest|1791|File7.txt' to server2 at time: 2020-03-20 at 17:35:44.735 CDT
-> client4 receives 'server2|ReadSuccessAck|1796|client0 message #9{newLine}client4 message #6{newLine}client0 message #18' from server2 at time: 2020-03-20 at 17:35:44.739 CDT
-> client4 sends 'client4|ClientWriteRequest|1799|File17.txt|client4 message #17' to server3 at time: 2020-03-20 at 17:35:44.848 CDT
-> client4 receives 'server3|WriteSuccessAck|1853|' from server3 at time: 2020-03-20 at 17:35:45.192 CDT
-> client4 sends 'client4|ClientWriteRequest|1856|File17.txt|client4 message #17' to server4 at time: 2020-03-20 at 17:35:45.192 CDT
-> client4 receives 'server4|WriteSuccessAck|1878|' from server4 at time: 2020-03-20 at 17:35:45.319 CDT
-> client4 sends 'client4|ClientWriteRequest|1881|File17.txt|client4 message #17' to server5 at time: 2020-03-20 at 17:35:45.321 CDT
-> client4 receives 'server5|WriteSuccessAck|1900|' from server5 at time: 2020-03-20 at 17:35:45.448 CDT
-> client4 sends 'client4|ClientReadRequest|1903|File9.txt' to server3 at time: 2020-03-20 at 17:35:45.627 CDT
-> client4 receives 'server3|ReadSuccessAck|1927|client2 message #8{newLine}client3 message #9' from server3 at time: 2020-03-20 at 17:35:45.633 CDT
-> client4 sends 'client4|ClientReadRequest|1930|File2.txt' to server2 at time: 2020-03-20 at 17:35:45.734 CDT
-> client4 receives 'server2|ReadSuccessAck|1932|client4 message #3{newLine}client3 message #3{newLine}client1 message #9{newLine}client1 message #12' from server2 at time: 2020-03-20 at 17:35:45.740 CDT
-> client4 gracefully exits at time: 2020-03-20 at 17:35:45.740 CDT
+> server0 starts listening on (localhost:1370)... at time: 2020-03-20 at 19:09:44.239 CDT
+> server0 sends 'Server server0' to server1 at time: 2020-03-20 at 19:09:44.835 CDT
+> server0 sends 'Server server0' to server2 at time: 2020-03-20 at 19:09:44.837 CDT
+> server0 sends 'Server server0' to server3 at time: 2020-03-20 at 19:09:44.838 CDT
+> server0 sends 'Server server0' to server4 at time: 2020-03-20 at 19:09:44.838 CDT
+> server0 sends 'Server server0' to server5 at time: 2020-03-20 at 19:09:44.840 CDT
+> server0 sends 'Server server0' to server6 at time: 2020-03-20 at 19:09:44.840 CDT
+> server0 receives 'server3|WriteAcquireRequest|3|File3.txt|client1 message #0' from server3 at time: 2020-03-20 at 19:09:47.185 CDT
+> server0 sends 'server0|WriteAcquireResponse|5|File3.txt|client1 message #0' to server3 at time: 2020-03-20 at 19:09:47.185 CDT
+> server0 receives 'server3|WriteSyncRequest|13|File3.txt|client1 message #0' from server3 at time: 2020-03-20 at 19:09:47.196 CDT
+> server0 appends 'client1 message #0' to file 'File3.txt' at time: 2020-03-20 at 19:09:47.197 CDT
+> server0 receives 'server3|WriteReleaseRequest|14|' from server3 at time: 2020-03-20 at 19:09:47.207 CDT
+> server0 receives 'server4|WriteAcquireRequest|21|File3.txt|client1 message #0' from server4 at time: 2020-03-20 at 19:09:47.219 CDT
+> server0 sends 'server0|WriteAcquireResponse|23|File3.txt|client1 message #0' to server4 at time: 2020-03-20 at 19:09:47.220 CDT
+> server0 receives 'server4|WriteSyncRequest|31|File3.txt|client1 message #0' from server4 at time: 2020-03-20 at 19:09:47.327 CDT
+> server0 receives 'server4|WriteReleaseRequest|32|' from server4 at time: 2020-03-20 at 19:09:47.332 CDT
+> server0 receives 'server5|WriteAcquireRequest|39|File3.txt|client1 message #0' from server5 at time: 2020-03-20 at 19:09:47.337 CDT
+> server0 sends 'server0|WriteAcquireResponse|41|File3.txt|client1 message #0' to server5 at time: 2020-03-20 at 19:09:47.338 CDT
+> server0 receives 'server5|WriteSyncRequest|49|File3.txt|client1 message #0' from server5 at time: 2020-03-20 at 19:09:47.348 CDT
+> server0 receives 'server5|WriteReleaseRequest|50|' from server5 at time: 2020-03-20 at 19:09:47.355 CDT
+> server0 receives 'client0|ClientWriteRequest|18|File14.txt|client0 message #1' from client0 at time: 2020-03-20 at 19:09:47.420 CDT
+> server0 sends 'server0|WriteAcquireRequest|53|File14.txt|client0 message #1' to server6 at time: 2020-03-20 at 19:09:47.420 CDT
+> server0 sends 'server0|WriteAcquireRequest|53|File14.txt|client0 message #1' to server5 at time: 2020-03-20 at 19:09:47.422 CDT
+> server0 sends 'server0|WriteAcquireRequest|53|File14.txt|client0 message #1' to server4 at time: 2020-03-20 at 19:09:47.424 CDT
+> server0 receives 'server6|WriteAcquireResponse|55|File14.txt|client0 message #1' from server6 at time: 2020-03-20 at 19:09:47.425 CDT
+> server0 sends 'server0|WriteAcquireRequest|53|File14.txt|client0 message #1' to server3 at time: 2020-03-20 at 19:09:47.425 CDT
+> server0 receives 'server4|WriteAcquireResponse|55|File14.txt|client0 message #1' from server4 at time: 2020-03-20 at 19:09:47.431 CDT
+> server0 receives 'server5|WriteAcquireResponse|55|File14.txt|client0 message #1' from server5 at time: 2020-03-20 at 19:09:47.430 CDT
+> server0 sends 'server0|WriteAcquireRequest|53|File14.txt|client0 message #1' to server2 at time: 2020-03-20 at 19:09:47.434 CDT
+> server0 sends 'server0|WriteAcquireRequest|53|File14.txt|client0 message #1' to server1 at time: 2020-03-20 at 19:09:47.437 CDT
+> server0 receives 'server3|WriteAcquireResponse|55|File14.txt|client0 message #1' from server3 at time: 2020-03-20 at 19:09:47.437 CDT
+> server0 receives 'server2|WriteAcquireResponse|55|File14.txt|client0 message #1' from server2 at time: 2020-03-20 at 19:09:47.440 CDT
+> server0 receives 'server1|WriteAcquireResponse|55|File14.txt|client0 message #1' from server1 at time: 2020-03-20 at 19:09:47.442 CDT
+> server0 receives 'server4|WriteAcquireRequest|58|File4.txt|client2 message #1' from server4 at time: 2020-03-20 at 19:09:47.443 CDT
+> server0 sends 'server0|WriteAcquireResponse|63|File4.txt|client2 message #1' to server4 at time: 2020-03-20 at 19:09:47.447 CDT
+> server0 appends 'client0 message #1' to file 'File14.txt' at time: 2020-03-20 at 19:09:47.543 CDT
+> server0 sends 'server0|WriteSyncRequest|64|File14.txt|client0 message #1' to server6 at time: 2020-03-20 at 19:09:47.543 CDT
+> server0 sends 'server0|WriteSyncRequest|64|File14.txt|client0 message #1' to server5 at time: 2020-03-20 at 19:09:47.544 CDT
+> server0 sends 'server0|WriteSyncRequest|64|File14.txt|client0 message #1' to server4 at time: 2020-03-20 at 19:09:47.544 CDT
+> server0 sends 'server0|WriteSyncRequest|64|File14.txt|client0 message #1' to server3 at time: 2020-03-20 at 19:09:47.549 CDT
+> server0 sends 'server0|WriteSyncRequest|64|File14.txt|client0 message #1' to server2 at time: 2020-03-20 at 19:09:47.551 CDT
+> server0 sends 'server0|WriteSyncRequest|64|File14.txt|client0 message #1' to server1 at time: 2020-03-20 at 19:09:47.554 CDT
+> server0 sends 'server0|WriteReleaseRequest|65|' to server6 at time: 2020-03-20 at 19:09:47.559 CDT
+> server0 sends 'server0|WriteReleaseRequest|65|' to server5 at time: 2020-03-20 at 19:09:47.559 CDT
+> server0 sends 'server0|WriteReleaseRequest|65|' to server4 at time: 2020-03-20 at 19:09:47.560 CDT
+> server0 sends 'server0|WriteReleaseRequest|65|' to server3 at time: 2020-03-20 at 19:09:47.563 CDT
+> server0 sends 'server0|WriteReleaseRequest|65|' to server2 at time: 2020-03-20 at 19:09:47.563 CDT
+> server0 sends 'server0|WriteReleaseRequest|65|' to server1 at time: 2020-03-20 at 19:09:47.564 CDT
+> server0 sends 'server0|WriteSuccessAck|67|' to client0 at time: 2020-03-20 at 19:09:47.565 CDT
+> server0 receives 'server1|WriteAcquireRequest|72|File14.txt|client0 message #1' from server1 at time: 2020-03-20 at 19:09:47.574 CDT
+> server0 sends 'server0|WriteAcquireResponse|74|File14.txt|client0 message #1' to server1 at time: 2020-03-20 at 19:09:47.575 CDT
+> server0 receives 'client1|ClientReadRequest|55|File14.txt' from client1 at time: 2020-03-20 at 19:09:47.619 CDT
+> server0 sends 'server0|ReadSuccessAck|75|client2 message #3{newLine}client0 message #1{newLine}client2 message #12{newLine}client0 message #1' to client1 at time: 2020-03-20 at 19:09:47.627 CDT
+> server0 receives 'server4|WriteSyncRequest|75|File4.txt|client2 message #1' from server4 at time: 2020-03-20 at 19:09:47.664 CDT
+> server0 appends 'client2 message #1' to file 'File4.txt' at time: 2020-03-20 at 19:09:47.665 CDT
+> server0 receives 'server4|WriteReleaseRequest|76|' from server4 at time: 2020-03-20 at 19:09:47.683 CDT
+> server0 receives 'server5|WriteAcquireRequest|83|File4.txt|client2 message #1' from server5 at time: 2020-03-20 at 19:09:47.697 CDT
+> server0 sends 'server0|WriteAcquireResponse|85|File4.txt|client2 message #1' to server5 at time: 2020-03-20 at 19:09:47.698 CDT
+> server0 receives 'server1|WriteSyncRequest|86|File14.txt|client0 message #1' from server1 at time: 2020-03-20 at 19:09:47.794 CDT
+> server0 receives 'server1|WriteReleaseRequest|87|' from server1 at time: 2020-03-20 at 19:09:47.804 CDT
+> server0 receives 'server2|WriteAcquireRequest|94|File14.txt|client0 message #1' from server2 at time: 2020-03-20 at 19:09:47.812 CDT
+> server0 sends 'server0|WriteAcquireResponse|96|File14.txt|client0 message #1' to server2 at time: 2020-03-20 at 19:09:47.814 CDT
+> server0 receives 'server5|WriteSyncRequest|97|File4.txt|client2 message #1' from server5 at time: 2020-03-20 at 19:09:47.823 CDT
+> server0 receives 'server5|WriteReleaseRequest|98|' from server5 at time: 2020-03-20 at 19:09:47.844 CDT
+> server0 receives 'server6|WriteAcquireRequest|105|File4.txt|client2 message #1' from server6 at time: 2020-03-20 at 19:09:47.861 CDT
+> server0 sends 'server0|WriteAcquireResponse|107|File4.txt|client2 message #1' to server6 at time: 2020-03-20 at 19:09:47.862 CDT
+> server0 receives 'server2|WriteSyncRequest|108|File14.txt|client0 message #1' from server2 at time: 2020-03-20 at 19:09:47.940 CDT
+> server0 receives 'server2|WriteReleaseRequest|109|' from server2 at time: 2020-03-20 at 19:09:47.950 CDT
+> server0 receives 'server6|WriteSyncRequest|117|File4.txt|client2 message #1' from server6 at time: 2020-03-20 at 19:09:47.983 CDT
+> server0 receives 'server6|WriteReleaseRequest|118|' from server6 at time: 2020-03-20 at 19:09:47.991 CDT
+> server0 receives 'server2|WriteAcquireRequest|121|File2.txt|client0 message #2' from server2 at time: 2020-03-20 at 19:09:48.047 CDT
+> server0 sends 'server0|WriteAcquireResponse|123|File2.txt|client0 message #2' to server2 at time: 2020-03-20 at 19:09:48.048 CDT
+> server0 receives 'server2|WriteAcquireRequest|131|File9.txt|client1 message #3' from server2 at time: 2020-03-20 at 19:09:48.093 CDT
+> server0 sends 'server0|WriteAcquireResponse|133|File9.txt|client1 message #3' to server2 at time: 2020-03-20 at 19:09:48.093 CDT
+> server0 receives 'server2|WriteSyncRequest|141|File2.txt|client0 message #2' from server2 at time: 2020-03-20 at 19:09:48.163 CDT
+> server0 appends 'client0 message #2' to file 'File2.txt' at time: 2020-03-20 at 19:09:48.163 CDT
+> server0 receives 'server2|WriteReleaseRequest|142|' from server2 at time: 2020-03-20 at 19:09:48.175 CDT
+> server0 receives 'server3|WriteAcquireRequest|149|File2.txt|client0 message #2' from server3 at time: 2020-03-20 at 19:09:48.185 CDT
+> server0 sends 'server0|WriteAcquireResponse|151|File2.txt|client0 message #2' to server3 at time: 2020-03-20 at 19:09:48.186 CDT
+> server0 receives 'server2|WriteSyncRequest|152|File9.txt|client1 message #3' from server2 at time: 2020-03-20 at 19:09:48.208 CDT
+> server0 appends 'client1 message #3' to file 'File9.txt' at time: 2020-03-20 at 19:09:48.209 CDT
+> server0 receives 'server2|WriteReleaseRequest|153|' from server2 at time: 2020-03-20 at 19:09:48.223 CDT
+> server0 receives 'server3|WriteAcquireRequest|161|File9.txt|client1 message #3' from server3 at time: 2020-03-20 at 19:09:48.233 CDT
+> server0 sends 'server0|WriteAcquireResponse|163|File9.txt|client1 message #3' to server3 at time: 2020-03-20 at 19:09:48.233 CDT
+> server0 receives 'server3|WriteSyncRequest|171|File2.txt|client0 message #2' from server3 at time: 2020-03-20 at 19:09:48.295 CDT
+> server0 receives 'server3|WriteReleaseRequest|172|' from server3 at time: 2020-03-20 at 19:09:48.306 CDT
+> server0 receives 'server4|WriteAcquireRequest|179|File2.txt|client0 message #2' from server4 at time: 2020-03-20 at 19:09:48.316 CDT
+> server0 sends 'server0|WriteAcquireResponse|181|File2.txt|client0 message #2' to server4 at time: 2020-03-20 at 19:09:48.318 CDT
+> server0 receives 'server3|WriteSyncRequest|182|File9.txt|client1 message #3' from server3 at time: 2020-03-20 at 19:09:48.353 CDT
+> server0 receives 'server3|WriteReleaseRequest|183|' from server3 at time: 2020-03-20 at 19:09:48.361 CDT
+> server0 receives 'server4|WriteAcquireRequest|191|File9.txt|client1 message #3' from server4 at time: 2020-03-20 at 19:09:48.373 CDT
+> server0 sends 'server0|WriteAcquireResponse|193|File9.txt|client1 message #3' to server4 at time: 2020-03-20 at 19:09:48.374 CDT
+> server0 receives 'server5|WriteAcquireRequest|186|File12.txt|client2 message #3' from server5 at time: 2020-03-20 at 19:09:48.374 CDT
+> server0 sends 'server0|WriteAcquireResponse|194|File12.txt|client2 message #3' to server5 at time: 2020-03-20 at 19:09:48.381 CDT
+> server0 receives 'server4|WriteSyncRequest|201|File2.txt|client0 message #2' from server4 at time: 2020-03-20 at 19:09:48.434 CDT
+> server0 receives 'server4|WriteReleaseRequest|202|' from server4 at time: 2020-03-20 at 19:09:48.441 CDT
+> server0 receives 'server5|WriteSyncRequest|205|File12.txt|client2 message #3' from server5 at time: 2020-03-20 at 19:09:48.498 CDT
+> server0 appends 'client2 message #3' to file 'File12.txt' at time: 2020-03-20 at 19:09:48.499 CDT
+> server0 receives 'server5|WriteReleaseRequest|206|' from server5 at time: 2020-03-20 at 19:09:48.508 CDT
+> server0 receives 'server6|WriteAcquireRequest|213|File12.txt|client2 message #3' from server6 at time: 2020-03-20 at 19:09:48.516 CDT
+> server0 sends 'server0|WriteAcquireResponse|215|File12.txt|client2 message #3' to server6 at time: 2020-03-20 at 19:09:48.517 CDT
+> server0 receives 'server4|WriteSyncRequest|216|File9.txt|client1 message #3' from server4 at time: 2020-03-20 at 19:09:48.598 CDT
+> server0 receives 'server4|WriteReleaseRequest|217|' from server4 at time: 2020-03-20 at 19:09:48.604 CDT
+> server0 receives 'server6|WriteSyncRequest|225|File12.txt|client2 message #3' from server6 at time: 2020-03-20 at 19:09:48.629 CDT
+> server0 receives 'server6|WriteReleaseRequest|226|' from server6 at time: 2020-03-20 at 19:09:48.641 CDT
+> server0 receives 'client2|ClientWriteRequest|231|File12.txt|client2 message #3' from client2 at time: 2020-03-20 at 19:09:48.649 CDT
+> server0 sends 'server0|WriteAcquireRequest|233|File12.txt|client2 message #3' to server6 at time: 2020-03-20 at 19:09:48.649 CDT
+> server0 sends 'server0|WriteAcquireRequest|233|File12.txt|client2 message #3' to server5 at time: 2020-03-20 at 19:09:48.650 CDT
+> server0 sends 'server0|WriteAcquireRequest|233|File12.txt|client2 message #3' to server4 at time: 2020-03-20 at 19:09:48.650 CDT
+> server0 receives 'server6|WriteAcquireResponse|235|File12.txt|client2 message #3' from server6 at time: 2020-03-20 at 19:09:48.651 CDT
+> server0 receives 'server5|WriteAcquireResponse|235|File12.txt|client2 message #3' from server5 at time: 2020-03-20 at 19:09:48.652 CDT
+> server0 sends 'server0|WriteAcquireRequest|233|File12.txt|client2 message #3' to server3 at time: 2020-03-20 at 19:09:48.651 CDT
+> server0 receives 'server4|WriteAcquireResponse|235|File12.txt|client2 message #3' from server4 at time: 2020-03-20 at 19:09:48.655 CDT
+> server0 sends 'server0|WriteAcquireRequest|233|File12.txt|client2 message #3' to server2 at time: 2020-03-20 at 19:09:48.655 CDT
+> server0 receives 'server3|WriteAcquireResponse|235|File12.txt|client2 message #3' from server3 at time: 2020-03-20 at 19:09:48.657 CDT
+> server0 sends 'server0|WriteAcquireRequest|233|File12.txt|client2 message #3' to server1 at time: 2020-03-20 at 19:09:48.657 CDT
+> server0 receives 'server2|WriteAcquireResponse|235|File12.txt|client2 message #3' from server2 at time: 2020-03-20 at 19:09:48.659 CDT
+> server0 receives 'server1|WriteAcquireResponse|235|File12.txt|client2 message #3' from server1 at time: 2020-03-20 at 19:09:48.661 CDT
+> server0 sends 'server0|WriteSyncRequest|243|File12.txt|client2 message #3' to server6 at time: 2020-03-20 at 19:09:48.760 CDT
+> server0 sends 'server0|WriteSyncRequest|243|File12.txt|client2 message #3' to server5 at time: 2020-03-20 at 19:09:48.760 CDT
+> server0 sends 'server0|WriteSyncRequest|243|File12.txt|client2 message #3' to server4 at time: 2020-03-20 at 19:09:48.763 CDT
+> server0 sends 'server0|WriteSyncRequest|243|File12.txt|client2 message #3' to server3 at time: 2020-03-20 at 19:09:48.764 CDT
+> server0 sends 'server0|WriteSyncRequest|243|File12.txt|client2 message #3' to server2 at time: 2020-03-20 at 19:09:48.766 CDT
+> server0 sends 'server0|WriteSyncRequest|243|File12.txt|client2 message #3' to server1 at time: 2020-03-20 at 19:09:48.768 CDT
+> server0 sends 'server0|WriteReleaseRequest|244|' to server6 at time: 2020-03-20 at 19:09:48.769 CDT
+> server0 sends 'server0|WriteReleaseRequest|244|' to server5 at time: 2020-03-20 at 19:09:48.769 CDT
+> server0 sends 'server0|WriteReleaseRequest|244|' to server4 at time: 2020-03-20 at 19:09:48.771 CDT
+> server0 sends 'server0|WriteReleaseRequest|244|' to server3 at time: 2020-03-20 at 19:09:48.773 CDT
+> server0 sends 'server0|WriteReleaseRequest|244|' to server2 at time: 2020-03-20 at 19:09:48.773 CDT
+> server0 sends 'server0|WriteReleaseRequest|244|' to server1 at time: 2020-03-20 at 19:09:48.774 CDT
+> server0 sends 'server0|WriteSuccessAck|246|' to client2 at time: 2020-03-20 at 19:09:48.775 CDT
+> server0 receives 'client2|ClientReadRequest|249|File14.txt' from client2 at time: 2020-03-20 at 19:09:48.861 CDT
+> server0 sends 'server0|ReadSuccessAck|251|client2 message #3{newLine}client0 message #1{newLine}client2 message #12{newLine}client0 message #1' to client2 at time: 2020-03-20 at 19:09:48.862 CDT
+> server0 receives 'client2|ClientReadRequest|264|File6.txt' from client2 at time: 2020-03-20 at 19:09:49.440 CDT
+> server0 sends 'server0|ReadSuccessAck|266|client2 message #9{newLine}client2 message #19' to client2 at time: 2020-03-20 at 19:09:49.441 CDT
+> server0 receives 'server4|WriteAcquireRequest|262|File4.txt|client0 message #7' from server4 at time: 2020-03-20 at 19:09:49.619 CDT
+> server0 sends 'server0|WriteAcquireResponse|267|File4.txt|client0 message #7' to server4 at time: 2020-03-20 at 19:09:49.620 CDT
+> server0 receives 'server4|WriteSyncRequest|274|File4.txt|client0 message #7' from server4 at time: 2020-03-20 at 19:09:49.732 CDT
+> server0 appends 'client0 message #7' to file 'File4.txt' at time: 2020-03-20 at 19:09:49.732 CDT
+> server0 receives 'server4|WriteReleaseRequest|275|' from server4 at time: 2020-03-20 at 19:09:49.772 CDT
+> server0 receives 'server5|WriteAcquireRequest|282|File4.txt|client0 message #7' from server5 at time: 2020-03-20 at 19:09:49.798 CDT
+> server0 sends 'server0|WriteAcquireResponse|284|File4.txt|client0 message #7' to server5 at time: 2020-03-20 at 19:09:49.799 CDT
+> server0 receives 'server5|WriteSyncRequest|292|File4.txt|client0 message #7' from server5 at time: 2020-03-20 at 19:09:49.915 CDT
+> server0 receives 'server5|WriteReleaseRequest|293|' from server5 at time: 2020-03-20 at 19:09:49.923 CDT
+> server0 receives 'server6|WriteAcquireRequest|300|File4.txt|client0 message #7' from server6 at time: 2020-03-20 at 19:09:49.931 CDT
+> server0 sends 'server0|WriteAcquireResponse|302|File4.txt|client0 message #7' to server6 at time: 2020-03-20 at 19:09:49.932 CDT
+> server0 receives 'server6|WriteSyncRequest|310|File4.txt|client0 message #7' from server6 at time: 2020-03-20 at 19:09:50.045 CDT
+> server0 receives 'server6|WriteReleaseRequest|311|' from server6 at time: 2020-03-20 at 19:09:50.061 CDT
+> server0 receives 'server2|WriteAcquireRequest|323|File9.txt|client0 message #9' from server2 at time: 2020-03-20 at 19:09:50.254 CDT
+> server0 sends 'server0|WriteAcquireResponse|325|File9.txt|client0 message #9' to server2 at time: 2020-03-20 at 19:09:50.254 CDT
+> server0 receives 'client3|ClientReadRequest|1|File13.txt' from client3 at time: 2020-03-20 at 19:09:50.314 CDT
+> server0 sends 'server0|ReadFailureAck|326|File 'File13.txt' does not exist' to client3 at time: 2020-03-20 at 19:09:50.314 CDT
+> server0 receives 'server2|WriteSyncRequest|333|File9.txt|client0 message #9' from server2 at time: 2020-03-20 at 19:09:50.368 CDT
+> server0 appends 'client0 message #9' to file 'File9.txt' at time: 2020-03-20 at 19:09:50.368 CDT
+> server0 receives 'server2|WriteReleaseRequest|334|' from server2 at time: 2020-03-20 at 19:09:50.379 CDT
+> server0 receives 'server3|WriteAcquireRequest|341|File9.txt|client0 message #9' from server3 at time: 2020-03-20 at 19:09:50.388 CDT
+> server0 sends 'server0|WriteAcquireResponse|343|File9.txt|client0 message #9' to server3 at time: 2020-03-20 at 19:09:50.389 CDT
+> server0 receives 'server3|WriteAcquireRequest|351|File17.txt|client1 message #9' from server3 at time: 2020-03-20 at 19:09:50.444 CDT
+> server0 sends 'server0|WriteAcquireResponse|353|File17.txt|client1 message #9' to server3 at time: 2020-03-20 at 19:09:50.445 CDT
+> server0 receives 'server3|WriteSyncRequest|361|File9.txt|client0 message #9' from server3 at time: 2020-03-20 at 19:09:50.500 CDT
+> server0 receives 'server3|WriteReleaseRequest|362|' from server3 at time: 2020-03-20 at 19:09:50.509 CDT
+> server0 receives 'server4|WriteAcquireRequest|369|File9.txt|client0 message #9' from server4 at time: 2020-03-20 at 19:09:50.516 CDT
+> server0 sends 'server0|WriteAcquireResponse|371|File9.txt|client0 message #9' to server4 at time: 2020-03-20 at 19:09:50.517 CDT
+> server0 receives 'client3|ClientReadRequest|329|File14.txt' from client3 at time: 2020-03-20 at 19:09:50.550 CDT
+> server0 sends 'server0|ReadSuccessAck|372|client2 message #3{newLine}client0 message #1{newLine}client2 message #12{newLine}client0 message #1' to client3 at time: 2020-03-20 at 19:09:50.550 CDT
+> server0 receives 'server3|WriteSyncRequest|372|File17.txt|client1 message #9' from server3 at time: 2020-03-20 at 19:09:50.556 CDT
+> server0 appends 'client1 message #9' to file 'File17.txt' at time: 2020-03-20 at 19:09:50.556 CDT
+> server0 receives 'server3|WriteReleaseRequest|373|' from server3 at time: 2020-03-20 at 19:09:50.566 CDT
+> server0 receives 'server4|WriteAcquireRequest|381|File17.txt|client1 message #9' from server4 at time: 2020-03-20 at 19:09:50.576 CDT
+> server0 sends 'server0|WriteAcquireResponse|383|File17.txt|client1 message #9' to server4 at time: 2020-03-20 at 19:09:50.576 CDT
+> server0 receives 'server4|WriteSyncRequest|391|File9.txt|client0 message #9' from server4 at time: 2020-03-20 at 19:09:50.629 CDT
+> server0 receives 'server4|WriteReleaseRequest|392|' from server4 at time: 2020-03-20 at 19:09:50.638 CDT
+> server0 receives 'server4|WriteSyncRequest|395|File17.txt|client1 message #9' from server4 at time: 2020-03-20 at 19:09:50.685 CDT
+> server0 receives 'server4|WriteReleaseRequest|396|' from server4 at time: 2020-03-20 at 19:09:50.693 CDT
+> server0 receives 'server5|WriteAcquireRequest|403|File17.txt|client1 message #9' from server5 at time: 2020-03-20 at 19:09:50.703 CDT
+> server0 sends 'server0|WriteAcquireResponse|405|File17.txt|client1 message #9' to server5 at time: 2020-03-20 at 19:09:50.703 CDT
+> server0 receives 'server5|WriteSyncRequest|413|File17.txt|client1 message #9' from server5 at time: 2020-03-20 at 19:09:50.813 CDT
+> server0 receives 'server5|WriteReleaseRequest|414|' from server5 at time: 2020-03-20 at 19:09:50.823 CDT
+> server0 receives 'client3|ClientReadRequest|420|File5.txt' from client3 at time: 2020-03-20 at 19:09:51.659 CDT
+> server0 sends 'server0|ReadSuccessAck|422|client2 message #7{newLine}client0 message #17' to client3 at time: 2020-03-20 at 19:09:51.660 CDT
+> server0 receives 'client3|ClientReadRequest|425|File19.txt' from client3 at time: 2020-03-20 at 19:09:52.423 CDT
+> server0 sends 'server0|ReadSuccessAck|427|client0 message #9' to client3 at time: 2020-03-20 at 19:09:52.424 CDT
+> server0 receives 'client3|ClientReadRequest|435|File14.txt' from client3 at time: 2020-03-20 at 19:09:52.957 CDT
+> server0 sends 'server0|ReadSuccessAck|437|client2 message #3{newLine}client0 message #1{newLine}client2 message #12{newLine}client0 message #1' to client3 at time: 2020-03-20 at 19:09:52.957 CDT
 ```
 
-Here is sample of server's output (only show a snippet here):
+_Server0_ contains all kind of requests from all clients (except _client4_), as expected.
+
+_Server1_ outputs:
 ```text
-> server2 starts listening on (localhost:1372)... at time: 2020-03-20 at 17:35:30.555 CDT
-> server2 sends 'Server server2' to server0 at time: 2020-03-20 at 17:35:30.614 CDT
-> server2 sends 'Server server2' to server1 at time: 2020-03-20 at 17:35:30.619 CDT
-> server2 sends 'Server server2' to server3 at time: 2020-03-20 at 17:35:30.623 CDT
-> server2 sends 'Server server2' to server4 at time: 2020-03-20 at 17:35:30.625 CDT
-> server2 sends 'Server server2' to server5 at time: 2020-03-20 at 17:35:31.127 CDT
-> server2 sends 'Server server2' to server6 at time: 2020-03-20 at 17:35:31.128 CDT
-> server2 receives 'server0|WriteAcquireRequest|3|File0.txt|client3 message #0' from server0 at time: 2020-03-20 at 17:35:35.021 CDT
-> server2 sends 'server2|WriteAcquireResponse|5|File0.txt|client3 message #0' to server0 at time: 2020-03-20 at 17:35:35.022 CDT
-> server2 receives 'server0|WriteSyncRequest|17|File0.txt|client3 message #0' from server0 at time: 2020-03-20 at 17:35:35.030 CDT
-> server2 appends 'client3 message #0' to file 'File0.txt' at time: 2020-03-20 at 17:35:35.031 CDT
-> server2 receives 'server4|WriteAcquireRequest|20|File11.txt|client2 message #0' from server4 at time: 2020-03-20 at 17:35:35.040 CDT
-> server2 sends 'server2|WriteAcquireResponse|22|File11.txt|client2 message #0' to server4 at time: 2020-03-20 at 17:35:35.040 CDT
-> server2 receives 'server0|WriteReleaseRequest|18|' from server0 at time: 2020-03-20 at 17:35:35.042 CDT
-> server2 receives 'server1|WriteAcquireRequest|29|File0.txt|client3 message #0' from server1 at time: 2020-03-20 at 17:35:35.055 CDT
-> server2 sends 'server2|WriteAcquireResponse|31|File0.txt|client3 message #0' to server1 at time: 2020-03-20 at 17:35:35.055 CDT
-> server2 receives 'server1|WriteAcquireRequest|39|File8.txt|client0 message #2' from server1 at time: 2020-03-20 at 17:35:35.089 CDT
-> server2 sends 'server2|WriteAcquireResponse|41|File8.txt|client0 message #2' to server1 at time: 2020-03-20 at 17:35:35.089 CDT
-> server2 receives 'server4|WriteSyncRequest|42|File11.txt|client2 message #0' from server4 at time: 2020-03-20 at 17:35:35.149 CDT
-> server2 appends 'client2 message #0' to file 'File11.txt' at time: 2020-03-20 at 17:35:35.149 CDT
-> server2 receives 'server4|WriteReleaseRequest|43|' from server4 at time: 2020-03-20 at 17:35:35.161 CDT
-> server2 receives 'server5|WriteAcquireRequest|50|File11.txt|client2 message #0' from server5 at time: 2020-03-20 at 17:35:35.190 CDT
-> server2 sends 'server2|WriteAcquireResponse|52|File11.txt|client2 message #0' to server5 at time: 2020-03-20 at 17:35:35.191 CDT
-> server2 receives 'server5|WriteAcquireRequest|51|File19.txt|client4 message #0' from server5 at time: 2020-03-20 at 17:35:35.198 CDT
-> server2 sends 'server2|WriteAcquireResponse|53|File19.txt|client4 message #0' to server5 at time: 2020-03-20 at 17:35:35.199 CDT
-> server2 receives 'server1|WriteSyncRequest|54|File0.txt|client3 message #0' from server1 at time: 2020-03-20 at 17:35:35.267 CDT
-> server2 receives 'server1|WriteReleaseRequest|55|' from server1 at time: 2020-03-20 at 17:35:35.277 CDT
-> server2 receives 'client3|ClientWriteRequest|60|File0.txt|client3 message #0' from client3 at time: 2020-03-20 at 17:35:35.279 CDT
-> server2 sends 'server2|WriteAcquireRequest|62|File0.txt|client3 message #0' to server0 at time: 2020-03-20 at 17:35:35.280 CDT
-> server2 sends 'server2|WriteAcquireRequest|62|File0.txt|client3 message #0' to server6 at time: 2020-03-20 at 17:35:35.282 CDT
-> server2 sends 'server2|WriteAcquireRequest|62|File0.txt|client3 message #0' to server5 at time: 2020-03-20 at 17:35:35.282 CDT
-> server2 sends 'server2|WriteAcquireRequest|62|File0.txt|client3 message #0' to server4 at time: 2020-03-20 at 17:35:35.285 CDT
-> server2 receives 'server6|WriteAcquireResponse|64|File0.txt|client3 message #0' from server6 at time: 2020-03-20 at 17:35:35.286 CDT
-> server2 receives 'server0|WriteAcquireResponse|64|File0.txt|client3 message #0' from server0 at time: 2020-03-20 at 17:35:35.287 CDT
-> server2 sends 'server2|WriteAcquireRequest|62|File0.txt|client3 message #0' to server3 at time: 2020-03-20 at 17:35:35.286 CDT
-> server2 receives 'server4|WriteAcquireResponse|64|File0.txt|client3 message #0' from server4 at time: 2020-03-20 at 17:35:35.294 CDT
-> server2 receives 'server5|WriteAcquireResponse|68|File0.txt|client3 message #0' from server5 at time: 2020-03-20 at 17:35:35.291 CDT
-> server2 sends 'server2|WriteAcquireRequest|62|File0.txt|client3 message #0' to server1 at time: 2020-03-20 at 17:35:35.299 CDT
-> server2 receives 'server3|WriteAcquireResponse|64|File0.txt|client3 message #0' from server3 at time: 2020-03-20 at 17:35:35.310 CDT
-> server2 receives 'server1|WriteSyncRequest|58|File8.txt|client0 message #2' from server1 at time: 2020-03-20 at 17:35:35.314 CDT
-> server2 appends 'client0 message #2' to file 'File8.txt' at time: 2020-03-20 at 17:35:35.324 CDT
-> server2 receives 'server1|WriteAcquireResponse|64|File0.txt|client3 message #0' from server1 at time: 2020-03-20 at 17:35:35.331 CDT
-> server2 receives 'server5|WriteSyncRequest|70|File11.txt|client2 message #0' from server5 at time: 2020-03-20 at 17:35:35.333 CDT
-> server2 receives 'server1|WriteReleaseRequest|59|' from server1 at time: 2020-03-20 at 17:35:35.349 CDT
-> server2 receives 'client0|ClientWriteRequest|77|File8.txt|client0 message #2' from client0 at time: 2020-03-20 at 17:35:35.352 CDT
-> server2 sends 'server2|WriteAcquireRequest|79|File8.txt|client0 message #2' to server0 at time: 2020-03-20 at 17:35:35.359 CDT
-> server2 receives 'server5|WriteReleaseRequest|71|' from server5 at time: 2020-03-20 at 17:35:35.361 CDT
-> server2 sends 'server2|WriteAcquireRequest|79|File8.txt|client0 message #2' to server6 at time: 2020-03-20 at 17:35:35.361 CDT
-> server2 sends 'server2|WriteAcquireRequest|79|File8.txt|client0 message #2' to server5 at time: 2020-03-20 at 17:35:35.363 CDT
-> server2 receives 'server0|WriteAcquireResponse|81|File8.txt|client0 message #2' from server0 at time: 2020-03-20 at 17:35:35.367 CDT
-> server2 receives 'server5|WriteAcquireResponse|81|File8.txt|client0 message #2' from server5 at time: 2020-03-20 at 17:35:35.373 CDT
-> server2 sends 'server2|WriteAcquireRequest|79|File8.txt|client0 message #2' to server4 at time: 2020-03-20 at 17:35:35.369 CDT
-> server2 receives 'server6|WriteAcquireResponse|81|File8.txt|client0 message #2' from server6 at time: 2020-03-20 at 17:35:35.376 CDT
-> server2 sends 'server2|WriteAcquireRequest|79|File8.txt|client0 message #2' to server3 at time: 2020-03-20 at 17:35:35.380 CDT
-> server2 sends 'server2|WriteAcquireRequest|79|File8.txt|client0 message #2' to server1 at time: 2020-03-20 at 17:35:35.391 CDT
-> server2 receives 'server3|WriteAcquireResponse|81|File8.txt|client0 message #2' from server3 at time: 2020-03-20 at 17:35:35.410 CDT
-> server2 receives 'server6|WriteAcquireRequest|82|File11.txt|client2 message #0' from server6 at time: 2020-03-20 at 17:35:35.410 CDT
-> server2 receives 'server1|WriteAcquireResponse|81|File8.txt|client0 message #2' from server1 at time: 2020-03-20 at 17:35:35.413 CDT
-> server2 receives 'server4|WriteAcquireResponse|85|File8.txt|client0 message #2' from server4 at time: 2020-03-20 at 17:35:35.410 CDT
-> server2 sends 'server2|WriteAcquireResponse|87|File11.txt|client2 message #0' to server6 at time: 2020-03-20 at 17:35:35.415 CDT
-> server2 sends 'server2|WriteSyncRequest|90|File0.txt|client3 message #0' to server0 at time: 2020-03-20 at 17:35:35.428 CDT
-> server2 receives 'server4|WriteAcquireRequest|75|File11.txt|client1 message #0' from server4 at time: 2020-03-20 at 17:35:35.424 CDT
-> server2 sends 'server2|WriteSyncRequest|90|File0.txt|client3 message #0' to server6 at time: 2020-03-20 at 17:35:35.439 CDT
-> server2 sends 'server2|WriteAcquireResponse|91|File11.txt|client1 message #0' to server4 at time: 2020-03-20 at 17:35:35.442 CDT
-> server2 sends 'server2|WriteSyncRequest|90|File0.txt|client3 message #0' to server5 at time: 2020-03-20 at 17:35:35.444 CDT
-> server2 receives 'server5|WriteSyncRequest|85|File19.txt|client4 message #0' from server5 at time: 2020-03-20 at 17:35:35.448 CDT
-> server2 appends 'client4 message #0' to file 'File19.txt' at time: 2020-03-20 at 17:35:35.459 CDT
-> server2 sends 'server2|WriteSyncRequest|90|File0.txt|client3 message #0' to server4 at time: 2020-03-20 at 17:35:35.453 CDT
-> server2 sends 'server2|WriteSyncRequest|90|File0.txt|client3 message #0' to server3 at time: 2020-03-20 at 17:35:35.464 CDT
-> server2 sends 'server2|WriteSyncRequest|90|File0.txt|client3 message #0' to server1 at time: 2020-03-20 at 17:35:35.467 CDT
-> server2 sends 'server2|WriteReleaseRequest|93|' to server0 at time: 2020-03-20 at 17:35:35.470 CDT
-> server2 sends 'server2|WriteReleaseRequest|93|' to server6 at time: 2020-03-20 at 17:35:35.476 CDT
-> server2 sends 'server2|WriteReleaseRequest|93|' to server5 at time: 2020-03-20 at 17:35:35.481 CDT
-> server2 receives 'server5|WriteReleaseRequest|86|' from server5 at time: 2020-03-20 at 17:35:35.481 CDT
-> server2 sends 'server2|WriteReleaseRequest|93|' to server4 at time: 2020-03-20 at 17:35:35.482 CDT
-> server2 sends 'server2|WriteReleaseRequest|93|' to server3 at time: 2020-03-20 at 17:35:35.484 CDT
-> server2 sends 'server2|WriteReleaseRequest|93|' to server1 at time: 2020-03-20 at 17:35:35.487 CDT
-> server2 sends 'server2|WriteSuccessAck|96|' to client3 at time: 2020-03-20 at 17:35:35.495 CDT
-> server2 receives 'server6|WriteAcquireRequest|99|File19.txt|client4 message #0' from server6 at time: 2020-03-20 at 17:35:35.510 CDT
-> server2 sends 'server2|WriteAcquireResponse|101|File19.txt|client4 message #0' to server6 at time: 2020-03-20 at 17:35:35.511 CDT
-> server2 receives 'server4|WriteSyncRequest|102|File11.txt|client1 message #0' from server4 at time: 2020-03-20 at 17:35:35.535 CDT
-> server2 appends 'client1 message #0' to file 'File11.txt' at time: 2020-03-20 at 17:35:35.536 CDT
-> server2 receives 'server4|WriteReleaseRequest|103|' from server4 at time: 2020-03-20 at 17:35:35.559 CDT
-> server2 receives 'server5|WriteAcquireRequest|110|File11.txt|client1 message #0' from server5 at time: 2020-03-20 at 17:35:35.578 CDT
-> server2 sends 'server2|WriteAcquireResponse|112|File11.txt|client1 message #0' to server5 at time: 2020-03-20 at 17:35:35.581 CDT
-> server2 sends 'server2|WriteSyncRequest|113|File8.txt|client0 message #2' to server0 at time: 2020-03-20 at 17:35:35.599 CDT
-> server2 sends 'server2|WriteSyncRequest|113|File8.txt|client0 message #2' to server6 at time: 2020-03-20 at 17:35:35.600 CDT
-> server2 sends 'server2|WriteSyncRequest|113|File8.txt|client0 message #2' to server5 at time: 2020-03-20 at 17:35:35.601 CDT
-> server2 sends 'server2|WriteSyncRequest|113|File8.txt|client0 message #2' to server4 at time: 2020-03-20 at 17:35:35.605 CDT
-> server2 sends 'server2|WriteSyncRequest|113|File8.txt|client0 message #2' to server3 at time: 2020-03-20 at 17:35:35.608 CDT
-> server2 sends 'server2|WriteSyncRequest|113|File8.txt|client0 message #2' to server1 at time: 2020-03-20 at 17:35:35.610 CDT
-> server2 sends 'server2|WriteReleaseRequest|114|' to server0 at time: 2020-03-20 at 17:35:35.611 CDT
-> server2 sends 'server2|WriteReleaseRequest|114|' to server6 at time: 2020-03-20 at 17:35:35.616 CDT
-> server2 sends 'server2|WriteReleaseRequest|114|' to server5 at time: 2020-03-20 at 17:35:35.624 CDT
-> server2 sends 'server2|WriteReleaseRequest|114|' to server4 at time: 2020-03-20 at 17:35:35.640 CDT
-> server2 sends 'server2|WriteReleaseRequest|114|' to server3 at time: 2020-03-20 at 17:35:35.645 CDT
-> server2 sends 'server2|WriteReleaseRequest|114|' to server1 at time: 2020-03-20 at 17:35:35.647 CDT
-> server2 sends 'server2|WriteSuccessAck|116|' to client0 at time: 2020-03-20 at 17:35:35.653 CDT
-> ...
+> server1 starts listening on (localhost:1371)... at time: 2020-03-20 at 19:09:44.307 CDT
+> server1 sends 'Server server1' to server0 at time: 2020-03-20 at 19:09:44.358 CDT
+> server1 sends 'Server server1' to server2 at time: 2020-03-20 at 19:09:44.363 CDT
+> server1 sends 'Server server1' to server3 at time: 2020-03-20 at 19:09:44.867 CDT
+> server1 sends 'Server server1' to server4 at time: 2020-03-20 at 19:09:44.868 CDT
+> server1 sends 'Server server1' to server5 at time: 2020-03-20 at 19:09:44.869 CDT
+> server1 sends 'Server server1' to server6 at time: 2020-03-20 at 19:09:44.870 CDT
+> server1 receives 'server3|WriteAcquireRequest|3|File3.txt|client1 message #0' from server3 at time: 2020-03-20 at 19:09:47.187 CDT
+> server1 sends 'server1|WriteAcquireResponse|5|File3.txt|client1 message #0' to server3 at time: 2020-03-20 at 19:09:47.188 CDT
+> server1 receives 'server3|WriteSyncRequest|13|File3.txt|client1 message #0' from server3 at time: 2020-03-20 at 19:09:47.200 CDT
+> server1 appends 'client1 message #0' to file 'File3.txt' at time: 2020-03-20 at 19:09:47.200 CDT
+> server1 receives 'server3|WriteReleaseRequest|14|' from server3 at time: 2020-03-20 at 19:09:47.211 CDT
+> server1 receives 'server4|WriteAcquireRequest|21|File3.txt|client1 message #0' from server4 at time: 2020-03-20 at 19:09:47.223 CDT
+> server1 sends 'server1|WriteAcquireResponse|23|File3.txt|client1 message #0' to server4 at time: 2020-03-20 at 19:09:47.224 CDT
+> server1 receives 'server4|WriteSyncRequest|31|File3.txt|client1 message #0' from server4 at time: 2020-03-20 at 19:09:47.331 CDT
+> server1 receives 'server4|WriteReleaseRequest|32|' from server4 at time: 2020-03-20 at 19:09:47.334 CDT
+> server1 receives 'server5|WriteAcquireRequest|39|File3.txt|client1 message #0' from server5 at time: 2020-03-20 at 19:09:47.344 CDT
+> server1 sends 'server1|WriteAcquireResponse|41|File3.txt|client1 message #0' to server5 at time: 2020-03-20 at 19:09:47.345 CDT
+> server1 receives 'server5|WriteSyncRequest|49|File3.txt|client1 message #0' from server5 at time: 2020-03-20 at 19:09:47.355 CDT
+> server1 receives 'server5|WriteReleaseRequest|50|' from server5 at time: 2020-03-20 at 19:09:47.360 CDT
+> server1 receives 'server0|WriteAcquireRequest|53|File14.txt|client0 message #1' from server0 at time: 2020-03-20 at 19:09:47.438 CDT
+> server1 sends 'server1|WriteAcquireResponse|55|File14.txt|client0 message #1' to server0 at time: 2020-03-20 at 19:09:47.439 CDT
+> server1 receives 'server4|WriteAcquireRequest|58|File4.txt|client2 message #1' from server4 at time: 2020-03-20 at 19:09:47.461 CDT
+> server1 sends 'server1|WriteAcquireResponse|60|File4.txt|client2 message #1' to server4 at time: 2020-03-20 at 19:09:47.461 CDT
+> server1 receives 'server0|WriteSyncRequest|64|File14.txt|client0 message #1' from server0 at time: 2020-03-20 at 19:09:47.558 CDT
+> server1 appends 'client0 message #1' to file 'File14.txt' at time: 2020-03-20 at 19:09:47.558 CDT
+> server1 receives 'server0|WriteReleaseRequest|65|' from server0 at time: 2020-03-20 at 19:09:47.565 CDT
+> server1 receives 'client0|ClientWriteRequest|70|File14.txt|client0 message #1' from client0 at time: 2020-03-20 at 19:09:47.573 CDT
+> server1 sends 'server1|WriteAcquireRequest|72|File14.txt|client0 message #1' to server0 at time: 2020-03-20 at 19:09:47.573 CDT
+> server1 sends 'server1|WriteAcquireRequest|72|File14.txt|client0 message #1' to server6 at time: 2020-03-20 at 19:09:47.574 CDT
+> server1 sends 'server1|WriteAcquireRequest|72|File14.txt|client0 message #1' to server5 at time: 2020-03-20 at 19:09:47.575 CDT
+> server1 sends 'server1|WriteAcquireRequest|72|File14.txt|client0 message #1' to server4 at time: 2020-03-20 at 19:09:47.577 CDT
+> server1 receives 'server0|WriteAcquireResponse|74|File14.txt|client0 message #1' from server0 at time: 2020-03-20 at 19:09:47.577 CDT
+> server1 receives 'server4|WriteAcquireResponse|74|File14.txt|client0 message #1' from server4 at time: 2020-03-20 at 19:09:47.582 CDT
+> server1 receives 'server5|WriteAcquireResponse|74|File14.txt|client0 message #1' from server5 at time: 2020-03-20 at 19:09:47.582 CDT
+> server1 receives 'server6|WriteAcquireResponse|74|File14.txt|client0 message #1' from server6 at time: 2020-03-20 at 19:09:47.580 CDT
+> server1 sends 'server1|WriteAcquireRequest|72|File14.txt|client0 message #1' to server3 at time: 2020-03-20 at 19:09:47.580 CDT
+> server1 sends 'server1|WriteAcquireRequest|72|File14.txt|client0 message #1' to server2 at time: 2020-03-20 at 19:09:47.587 CDT
+> server1 receives 'server3|WriteAcquireResponse|74|File14.txt|client0 message #1' from server3 at time: 2020-03-20 at 19:09:47.592 CDT
+> server1 receives 'server2|WriteAcquireResponse|74|File14.txt|client0 message #1' from server2 at time: 2020-03-20 at 19:09:47.593 CDT
+> server1 receives 'server4|WriteSyncRequest|75|File4.txt|client2 message #1' from server4 at time: 2020-03-20 at 19:09:47.679 CDT
+> server1 appends 'client2 message #1' to file 'File4.txt' at time: 2020-03-20 at 19:09:47.679 CDT
+> server1 receives 'server4|WriteReleaseRequest|76|' from server4 at time: 2020-03-20 at 19:09:47.694 CDT
+> server1 receives 'server5|WriteAcquireRequest|83|File4.txt|client2 message #1' from server5 at time: 2020-03-20 at 19:09:47.715 CDT
+> server1 sends 'server1|WriteAcquireResponse|85|File4.txt|client2 message #1' to server5 at time: 2020-03-20 at 19:09:47.716 CDT
+> server1 sends 'server1|WriteSyncRequest|86|File14.txt|client0 message #1' to server0 at time: 2020-03-20 at 19:09:47.793 CDT
+> server1 sends 'server1|WriteSyncRequest|86|File14.txt|client0 message #1' to server6 at time: 2020-03-20 at 19:09:47.794 CDT
+> server1 sends 'server1|WriteSyncRequest|86|File14.txt|client0 message #1' to server5 at time: 2020-03-20 at 19:09:47.796 CDT
+> server1 sends 'server1|WriteSyncRequest|86|File14.txt|client0 message #1' to server4 at time: 2020-03-20 at 19:09:47.797 CDT
+> server1 sends 'server1|WriteSyncRequest|86|File14.txt|client0 message #1' to server3 at time: 2020-03-20 at 19:09:47.799 CDT
+> server1 sends 'server1|WriteSyncRequest|86|File14.txt|client0 message #1' to server2 at time: 2020-03-20 at 19:09:47.801 CDT
+> server1 sends 'server1|WriteReleaseRequest|87|' to server0 at time: 2020-03-20 at 19:09:47.802 CDT
+> server1 sends 'server1|WriteReleaseRequest|87|' to server6 at time: 2020-03-20 at 19:09:47.804 CDT
+> server1 sends 'server1|WriteReleaseRequest|87|' to server5 at time: 2020-03-20 at 19:09:47.805 CDT
+> server1 sends 'server1|WriteReleaseRequest|87|' to server4 at time: 2020-03-20 at 19:09:47.805 CDT
+> server1 sends 'server1|WriteReleaseRequest|87|' to server3 at time: 2020-03-20 at 19:09:47.807 CDT
+> server1 sends 'server1|WriteReleaseRequest|87|' to server2 at time: 2020-03-20 at 19:09:47.808 CDT
+> server1 sends 'server1|WriteSuccessAck|89|' to client0 at time: 2020-03-20 at 19:09:47.809 CDT
+> server1 receives 'server2|WriteAcquireRequest|94|File14.txt|client0 message #1' from server2 at time: 2020-03-20 at 19:09:47.836 CDT
+> server1 sends 'server1|WriteAcquireResponse|96|File14.txt|client0 message #1' to server2 at time: 2020-03-20 at 19:09:47.836 CDT
+> server1 receives 'server5|WriteSyncRequest|97|File4.txt|client2 message #1' from server5 at time: 2020-03-20 at 19:09:47.840 CDT
+> server1 receives 'server5|WriteReleaseRequest|98|' from server5 at time: 2020-03-20 at 19:09:47.856 CDT
+> server1 receives 'server6|WriteAcquireRequest|105|File4.txt|client2 message #1' from server6 at time: 2020-03-20 at 19:09:47.879 CDT
+> server1 sends 'server1|WriteAcquireResponse|107|File4.txt|client2 message #1' to server6 at time: 2020-03-20 at 19:09:47.880 CDT
+> server1 receives 'server2|WriteSyncRequest|108|File14.txt|client0 message #1' from server2 at time: 2020-03-20 at 19:09:47.947 CDT
+> server1 receives 'server2|WriteReleaseRequest|109|' from server2 at time: 2020-03-20 at 19:09:47.958 CDT
+> server1 receives 'server6|WriteSyncRequest|117|File4.txt|client2 message #1' from server6 at time: 2020-03-20 at 19:09:47.990 CDT
+> server1 receives 'server6|WriteReleaseRequest|118|' from server6 at time: 2020-03-20 at 19:09:47.997 CDT
+> server1 receives 'server2|WriteAcquireRequest|121|File2.txt|client0 message #2' from server2 at time: 2020-03-20 at 19:09:48.060 CDT
+> server1 sends 'server1|WriteAcquireResponse|123|File2.txt|client0 message #2' to server2 at time: 2020-03-20 at 19:09:48.060 CDT
+> server1 receives 'server2|WriteAcquireRequest|131|File9.txt|client1 message #3' from server2 at time: 2020-03-20 at 19:09:48.106 CDT
+> server1 sends 'server1|WriteAcquireResponse|133|File9.txt|client1 message #3' to server2 at time: 2020-03-20 at 19:09:48.106 CDT
+> server1 receives 'server2|WriteSyncRequest|141|File2.txt|client0 message #2' from server2 at time: 2020-03-20 at 19:09:48.170 CDT
+> server1 appends 'client0 message #2' to file 'File2.txt' at time: 2020-03-20 at 19:09:48.172 CDT
+> server1 receives 'client2|ClientReadRequest|123|File13.txt' from client2 at time: 2020-03-20 at 19:09:48.174 CDT
+> server1 sends 'server1|ReadFailureAck|144|File 'File13.txt' does not exist' to client2 at time: 2020-03-20 at 19:09:48.176 CDT
+> server1 receives 'server2|WriteReleaseRequest|142|' from server2 at time: 2020-03-20 at 19:09:48.181 CDT
+> server1 receives 'server3|WriteAcquireRequest|149|File2.txt|client0 message #2' from server3 at time: 2020-03-20 at 19:09:48.194 CDT
+> server1 sends 'server1|WriteAcquireResponse|151|File2.txt|client0 message #2' to server3 at time: 2020-03-20 at 19:09:48.195 CDT
+> server1 receives 'server2|WriteSyncRequest|152|File9.txt|client1 message #3' from server2 at time: 2020-03-20 at 19:09:48.222 CDT
+> server1 appends 'client1 message #3' to file 'File9.txt' at time: 2020-03-20 at 19:09:48.222 CDT
+> server1 receives 'server2|WriteReleaseRequest|153|' from server2 at time: 2020-03-20 at 19:09:48.229 CDT
+> server1 receives 'server3|WriteAcquireRequest|161|File9.txt|client1 message #3' from server3 at time: 2020-03-20 at 19:09:48.252 CDT
+> server1 sends 'server1|WriteAcquireResponse|163|File9.txt|client1 message #3' to server3 at time: 2020-03-20 at 19:09:48.253 CDT
+> server1 receives 'server3|WriteSyncRequest|171|File2.txt|client0 message #2' from server3 at time: 2020-03-20 at 19:09:48.303 CDT
+> server1 receives 'server3|WriteReleaseRequest|172|' from server3 at time: 2020-03-20 at 19:09:48.312 CDT
+> server1 receives 'server4|WriteAcquireRequest|179|File2.txt|client0 message #2' from server4 at time: 2020-03-20 at 19:09:48.333 CDT
+> server1 sends 'server1|WriteAcquireResponse|181|File2.txt|client0 message #2' to server4 at time: 2020-03-20 at 19:09:48.335 CDT
+> server1 receives 'server3|WriteSyncRequest|182|File9.txt|client1 message #3' from server3 at time: 2020-03-20 at 19:09:48.360 CDT
+> server1 receives 'server3|WriteReleaseRequest|183|' from server3 at time: 2020-03-20 at 19:09:48.368 CDT
+> server1 receives 'server5|WriteAcquireRequest|186|File12.txt|client2 message #3' from server5 at time: 2020-03-20 at 19:09:48.397 CDT
+> server1 receives 'server4|WriteAcquireRequest|191|File9.txt|client1 message #3' from server4 at time: 2020-03-20 at 19:09:48.397 CDT
+> server1 sends 'server1|WriteAcquireResponse|188|File12.txt|client2 message #3' to server5 at time: 2020-03-20 at 19:09:48.397 CDT
+> server1 sends 'server1|WriteAcquireResponse|193|File9.txt|client1 message #3' to server4 at time: 2020-03-20 at 19:09:48.400 CDT
+> server1 receives 'server4|WriteSyncRequest|201|File2.txt|client0 message #2' from server4 at time: 2020-03-20 at 19:09:48.440 CDT
+> server1 receives 'server4|WriteReleaseRequest|202|' from server4 at time: 2020-03-20 at 19:09:48.446 CDT
+> server1 receives 'server5|WriteSyncRequest|205|File12.txt|client2 message #3' from server5 at time: 2020-03-20 at 19:09:48.506 CDT
+> server1 appends 'client2 message #3' to file 'File12.txt' at time: 2020-03-20 at 19:09:48.506 CDT
+> server1 receives 'server5|WriteReleaseRequest|206|' from server5 at time: 2020-03-20 at 19:09:48.514 CDT
+> server1 receives 'server6|WriteAcquireRequest|213|File12.txt|client2 message #3' from server6 at time: 2020-03-20 at 19:09:48.529 CDT
+> server1 sends 'server1|WriteAcquireResponse|215|File12.txt|client2 message #3' to server6 at time: 2020-03-20 at 19:09:48.529 CDT
+> server1 receives 'server4|WriteSyncRequest|216|File9.txt|client1 message #3' from server4 at time: 2020-03-20 at 19:09:48.603 CDT
+> server1 receives 'server4|WriteReleaseRequest|217|' from server4 at time: 2020-03-20 at 19:09:48.608 CDT
+> server1 receives 'server6|WriteSyncRequest|225|File12.txt|client2 message #3' from server6 at time: 2020-03-20 at 19:09:48.638 CDT
+> server1 receives 'server6|WriteReleaseRequest|226|' from server6 at time: 2020-03-20 at 19:09:48.646 CDT
+> server1 receives 'server0|WriteAcquireRequest|233|File12.txt|client2 message #3' from server0 at time: 2020-03-20 at 19:09:48.659 CDT
+> server1 sends 'server1|WriteAcquireResponse|235|File12.txt|client2 message #3' to server0 at time: 2020-03-20 at 19:09:48.660 CDT
+> server1 receives 'server0|WriteSyncRequest|243|File12.txt|client2 message #3' from server0 at time: 2020-03-20 at 19:09:48.769 CDT
+> server1 receives 'server0|WriteReleaseRequest|244|' from server0 at time: 2020-03-20 at 19:09:48.775 CDT
+> server1 receives 'client1|ClientReadRequest|250|File7.txt' from client1 at time: 2020-03-20 at 19:09:49.064 CDT
+> server1 sends 'server1|ReadSuccessAck|252|client0 message #5{newLine}client0 message #8{newLine}client0 message #16' to client1 at time: 2020-03-20 at 19:09:49.067 CDT
+> server1 receives 'server4|WriteAcquireRequest|262|File4.txt|client0 message #7' from server4 at time: 2020-03-20 at 19:09:49.629 CDT
+> server1 sends 'server1|WriteAcquireResponse|264|File4.txt|client0 message #7' to server4 at time: 2020-03-20 at 19:09:49.630 CDT
+> server1 receives 'server4|WriteSyncRequest|274|File4.txt|client0 message #7' from server4 at time: 2020-03-20 at 19:09:49.770 CDT
+> server1 appends 'client0 message #7' to file 'File4.txt' at time: 2020-03-20 at 19:09:49.771 CDT
+> server1 receives 'server4|WriteReleaseRequest|275|' from server4 at time: 2020-03-20 at 19:09:49.788 CDT
+> server1 receives 'server5|WriteAcquireRequest|282|File4.txt|client0 message #7' from server5 at time: 2020-03-20 at 19:09:49.814 CDT
+> server1 sends 'server1|WriteAcquireResponse|284|File4.txt|client0 message #7' to server5 at time: 2020-03-20 at 19:09:49.814 CDT
+> server1 receives 'server5|WriteSyncRequest|292|File4.txt|client0 message #7' from server5 at time: 2020-03-20 at 19:09:49.922 CDT
+> server1 receives 'server5|WriteReleaseRequest|293|' from server5 at time: 2020-03-20 at 19:09:49.928 CDT
+> server1 receives 'server6|WriteAcquireRequest|300|File4.txt|client0 message #7' from server6 at time: 2020-03-20 at 19:09:49.944 CDT
+> server1 sends 'server1|WriteAcquireResponse|302|File4.txt|client0 message #7' to server6 at time: 2020-03-20 at 19:09:49.944 CDT
+> server1 receives 'server6|WriteSyncRequest|310|File4.txt|client0 message #7' from server6 at time: 2020-03-20 at 19:09:50.058 CDT
+> server1 receives 'server6|WriteReleaseRequest|311|' from server6 at time: 2020-03-20 at 19:09:50.065 CDT
+> server1 receives 'server2|WriteAcquireRequest|323|File9.txt|client0 message #9' from server2 at time: 2020-03-20 at 19:09:50.265 CDT
+> server1 sends 'server1|WriteAcquireResponse|325|File9.txt|client0 message #9' to server2 at time: 2020-03-20 at 19:09:50.265 CDT
+> server1 receives 'server2|WriteSyncRequest|333|File9.txt|client0 message #9' from server2 at time: 2020-03-20 at 19:09:50.376 CDT
+> server1 appends 'client0 message #9' to file 'File9.txt' at time: 2020-03-20 at 19:09:50.376 CDT
+> server1 receives 'server2|WriteReleaseRequest|334|' from server2 at time: 2020-03-20 at 19:09:50.382 CDT
+> server1 receives 'server3|WriteAcquireRequest|341|File9.txt|client0 message #9' from server3 at time: 2020-03-20 at 19:09:50.399 CDT
+> server1 sends 'server1|WriteAcquireResponse|343|File9.txt|client0 message #9' to server3 at time: 2020-03-20 at 19:09:50.400 CDT
+> server1 receives 'server3|WriteAcquireRequest|351|File17.txt|client1 message #9' from server3 at time: 2020-03-20 at 19:09:50.452 CDT
+> server1 sends 'server1|WriteAcquireResponse|353|File17.txt|client1 message #9' to server3 at time: 2020-03-20 at 19:09:50.453 CDT
+> server1 receives 'server3|WriteSyncRequest|361|File9.txt|client0 message #9' from server3 at time: 2020-03-20 at 19:09:50.508 CDT
+> server1 receives 'server3|WriteReleaseRequest|362|' from server3 at time: 2020-03-20 at 19:09:50.513 CDT
+> server1 receives 'server4|WriteAcquireRequest|369|File9.txt|client0 message #9' from server4 at time: 2020-03-20 at 19:09:50.529 CDT
+> server1 sends 'server1|WriteAcquireResponse|371|File9.txt|client0 message #9' to server4 at time: 2020-03-20 at 19:09:50.529 CDT
+> server1 receives 'server3|WriteSyncRequest|372|File17.txt|client1 message #9' from server3 at time: 2020-03-20 at 19:09:50.564 CDT
+> server1 appends 'client1 message #9' to file 'File17.txt' at time: 2020-03-20 at 19:09:50.564 CDT
+> server1 receives 'server3|WriteReleaseRequest|373|' from server3 at time: 2020-03-20 at 19:09:50.570 CDT
+> server1 receives 'server4|WriteAcquireRequest|381|File17.txt|client1 message #9' from server4 at time: 2020-03-20 at 19:09:50.584 CDT
+> server1 sends 'server1|WriteAcquireResponse|383|File17.txt|client1 message #9' to server4 at time: 2020-03-20 at 19:09:50.585 CDT
+> server1 receives 'server4|WriteSyncRequest|391|File9.txt|client0 message #9' from server4 at time: 2020-03-20 at 19:09:50.637 CDT
+> server1 receives 'server4|WriteReleaseRequest|392|' from server4 at time: 2020-03-20 at 19:09:50.643 CDT
+> server1 receives 'server4|WriteSyncRequest|395|File17.txt|client1 message #9' from server4 at time: 2020-03-20 at 19:09:50.692 CDT
+> server1 receives 'server4|WriteReleaseRequest|396|' from server4 at time: 2020-03-20 at 19:09:50.698 CDT
+> server1 receives 'server5|WriteAcquireRequest|403|File17.txt|client1 message #9' from server5 at time: 2020-03-20 at 19:09:50.712 CDT
+> server1 sends 'server1|WriteAcquireResponse|405|File17.txt|client1 message #9' to server5 at time: 2020-03-20 at 19:09:50.713 CDT
+> server1 receives 'server5|WriteSyncRequest|413|File17.txt|client1 message #9' from server5 at time: 2020-03-20 at 19:09:50.821 CDT
+> server1 receives 'server5|WriteReleaseRequest|414|' from server5 at time: 2020-03-20 at 19:09:50.827 CDT
 ```
+
+Server1 has requests for all other clients except _client3_ and _client4_. Moreover, since these 2 clients cannot make any write request (proved above) thus no relay messages among servers for these 2 clients, _server1_ in fact does not have any messages regarding _client3_ and _client4_.
+
+_Client0_ outputs:
+```text
+> client0 starts at time: 2020-03-20 at 19:09:47.073 CDT
+> client0 sends 'client0|ClientReadRequest|1|File5.txt' to server6 at time: 2020-03-20 at 19:09:47.191 CDT
+> client0 receives 'server6|ReadSuccessAck|15|client2 message #7{newLine}client0 message #17' from server6 at time: 2020-03-20 at 19:09:47.201 CDT
+> client0 sends 'client0|ClientWriteRequest|18|File14.txt|client0 message #1' to server0 at time: 2020-03-20 at 19:09:47.420 CDT
+> client0 receives 'server0|WriteSuccessAck|67|' from server0 at time: 2020-03-20 at 19:09:47.570 CDT
+> client0 sends 'client0|ClientWriteRequest|70|File14.txt|client0 message #1' to server1 at time: 2020-03-20 at 19:09:47.571 CDT
+> client0 receives 'server1|WriteSuccessAck|89|' from server1 at time: 2020-03-20 at 19:09:47.809 CDT
+> client0 sends 'client0|ClientWriteRequest|92|File14.txt|client0 message #1' to server2 at time: 2020-03-20 at 19:09:47.810 CDT
+> client0 receives 'server2|WriteSuccessAck|111|' from server2 at time: 2020-03-20 at 19:09:47.960 CDT
+> client0 sends 'client0|ClientWriteRequest|114|File2.txt|client0 message #2' to server2 at time: 2020-03-20 at 19:09:48.045 CDT
+> client0 receives 'server2|WriteSuccessAck|144|' from server2 at time: 2020-03-20 at 19:09:48.183 CDT
+> client0 sends 'client0|ClientWriteRequest|147|File2.txt|client0 message #2' to server3 at time: 2020-03-20 at 19:09:48.183 CDT
+> client0 receives 'server3|WriteSuccessAck|174|' from server3 at time: 2020-03-20 at 19:09:48.313 CDT
+> client0 sends 'client0|ClientWriteRequest|177|File2.txt|client0 message #2' to server4 at time: 2020-03-20 at 19:09:48.314 CDT
+> client0 receives 'server4|WriteSuccessAck|204|' from server4 at time: 2020-03-20 at 19:09:48.447 CDT
+> client0 sends 'client0|ClientReadRequest|207|File18.txt' to server5 at time: 2020-03-20 at 19:09:48.585 CDT
+> client0 receives 'server5|ReadSuccessAck|216|client1 message #8{newLine}client1 message #19' from server5 at time: 2020-03-20 at 19:09:48.588 CDT
+> client0 sends 'client0|ClientReadRequest|219|File2.txt' to server4 at time: 2020-03-20 at 19:09:48.782 CDT
+> client0 receives 'server4|ReadSuccessAck|247|client0 message #10{newLine}client0 message #2' from server4 at time: 2020-03-20 at 19:09:48.788 CDT
+> client0 sends 'client0|ClientReadRequest|250|File17.txt' to server3 at time: 2020-03-20 at 19:09:48.973 CDT
+> client0 receives 'server3|ReadSuccessAck|252|client1 message #10{newLine}client1 message #12' from server3 at time: 2020-03-20 at 19:09:48.976 CDT
+> client0 sends 'client0|ClientReadRequest|255|File3.txt' to server3 at time: 2020-03-20 at 19:09:49.394 CDT
+> client0 receives 'server3|ReadSuccessAck|257|client1 message #0' from server3 at time: 2020-03-20 at 19:09:49.399 CDT
+> client0 sends 'client0|ClientWriteRequest|260|File4.txt|client0 message #7' to server4 at time: 2020-03-20 at 19:09:49.617 CDT
+> client0 receives 'server4|WriteSuccessAck|277|' from server4 at time: 2020-03-20 at 19:09:49.793 CDT
+> client0 sends 'client0|ClientWriteRequest|280|File4.txt|client0 message #7' to server5 at time: 2020-03-20 at 19:09:49.794 CDT
+> client0 receives 'server5|WriteSuccessAck|295|' from server5 at time: 2020-03-20 at 19:09:49.929 CDT
+> client0 sends 'client0|ClientWriteRequest|298|File4.txt|client0 message #7' to server6 at time: 2020-03-20 at 19:09:49.929 CDT
+> client0 receives 'server6|WriteSuccessAck|313|' from server6 at time: 2020-03-20 at 19:09:50.066 CDT
+> client0 sends 'client0|ClientReadRequest|316|File4.txt' to server5 at time: 2020-03-20 at 19:09:50.091 CDT
+> client0 receives 'server5|ReadSuccessAck|318|client2 message #1{newLine}client0 message #7' from server5 at time: 2020-03-20 at 19:09:50.093 CDT
+> client0 sends 'client0|ClientWriteRequest|321|File9.txt|client0 message #9' to server2 at time: 2020-03-20 at 19:09:50.250 CDT
+> client0 receives 'server2|WriteSuccessAck|336|' from server2 at time: 2020-03-20 at 19:09:50.383 CDT
+> client0 sends 'client0|ClientWriteRequest|339|File9.txt|client0 message #9' to server3 at time: 2020-03-20 at 19:09:50.383 CDT
+> client0 receives 'server3|WriteSuccessAck|364|' from server3 at time: 2020-03-20 at 19:09:50.513 CDT
+> client0 sends 'client0|ClientWriteRequest|367|File9.txt|client0 message #9' to server4 at time: 2020-03-20 at 19:09:50.513 CDT
+> client0 receives 'server4|WriteSuccessAck|394|' from server4 at time: 2020-03-20 at 19:09:50.644 CDT
+> client0 gracefully exits at time: 2020-03-20 at 19:09:50.644 CDT
+```
+
+Since _client0_ connects to all servers, it cannot have any error message regarding connection, which in this case is true. The only possible error message that _client0_ can encounter is reading some files that does not exist, but this is hard to replicate due to timing. But [this unit test](#single-client-reads) already covers this case.
+
+_Client4_ outputs:
+```text
+> client4 starts at time: 2020-03-20 at 19:09:49.959 CDT
+> client4 sends 'client4|ClientReadRequest|1|File7.txt' to server2 at time: 2020-03-20 at 19:09:50.404 CDT
+> client4 receives 'server2|ReadSuccessAck|344|client0 message #5{newLine}client0 message #8{newLine}client0 message #16' from server2 at time: 2020-03-20 at 19:09:50.406 CDT
+> client4: Cannot write to 'File9.txt' because of too many (2) unreachable servers (server3, server4) at time: 2020-03-20 at 19:09:50.672 CDT
+> client4 sends 'client4|ClientReadRequest|347|File16.txt' to server2 at time: 2020-03-20 at 19:09:50.821 CDT
+> client4 receives 'server2|ReadSuccessAck|416|client1 message #18{newLine}client2 message #17' from server2 at time: 2020-03-20 at 19:09:50.824 CDT
+> client4: Cannot write to 'File13.txt' because of too many (2) unreachable servers (server0, server1) at time: 2020-03-20 at 19:09:51.254 CDT
+> client4: Cannot write to 'File2.txt' because of too many (2) unreachable servers (server3, server4) at time: 2020-03-20 at 19:09:51.552 CDT
+> client4: Cannot write to 'File7.txt' because of too many (2) unreachable servers (server0, server1) at time: 2020-03-20 at 19:09:52.032 CDT
+> client4 sends 'client4|ClientReadRequest|419|File14.txt' to server2 at time: 2020-03-20 at 19:09:52.517 CDT
+> client4 receives 'server2|ReadSuccessAck|421|client2 message #3{newLine}client0 message #1{newLine}client2 message #12{newLine}client0 message #1' from server2 at time: 2020-03-20 at 19:09:52.519 CDT
+> client4: Cannot write to 'File13.txt' because of too many (2) unreachable servers (server0, server1) at time: 2020-03-20 at 19:09:52.635 CDT
+> client4 cannot reach any server (server5, server4, server3) to read file 'File3.txt' at time: 2020-03-20 at 19:09:53.113 CDT
+> client4 cannot reach any server (server5, server3, server4) to read file 'File3.txt' at time: 2020-03-20 at 19:09:53.562 CDT
+> client4 gracefully exits at time: 2020-03-20 at 19:09:53.562 CDT
+```
+
+Since _client4_ connects to _server2_ and _server6_, it can read anything from these servers. But it cannot write to any servers (as proved above). Also, for example above. `File3.txt` requires _server3_, _server4_, and _server5_ (see [hash function](#hash-function)), and _client4_ cannot reach any of these server, it displays error message.
 
 Both client and server now allow both read and write requests. Server admits multiple concurrent requests from multiple clients, and a client triggers multiple write requests as per requirements. At the end the clients gracefully exit. Output files are the similar to [here](#multiple-clients-write). _Note that since the server has multiple threads to handle the communications so that they are non-blocking, the console of the servers shows out of order messages (receives some other servers' responses or clients' requests during broadcasting process), but the priority queue maintains the correct order (as shown in [debug output](#single-client-writes) earlier), same for the output files._
+
+All output files are synchronized across servers. And none of them contains thing from _client3_ and _client4_ for the reasons mentioned above.
+
+![Production output](./Img/ProductionOutput.PNG)

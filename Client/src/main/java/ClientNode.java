@@ -71,7 +71,7 @@ public class ClientNode {
 
         Random random = new Random();
 
-        for (int i = 0; i < 20; i++) {
+        for (int i = 0; i < 10; i++) {
             boolean needToWrite = random.nextBoolean();
             int fileNumber = random.nextInt(20);
 
