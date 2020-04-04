@@ -13,7 +13,9 @@ This project's communication protocol implements [Lamport's clock](https://en.wi
 
 ## Server communication
 
-When a server starts, it creates 2 threads and does the following:
+When a server starts, it tries to connect to all of its peers (supplied in as parameters).
+
+It then creates 2 threads and does the following:
 1. Tries to open socket to other servers (its peers)
 2. Accepts new connection request (either from other servers or from clients)
 
@@ -21,7 +23,7 @@ Upon accepting new open socket, the server creates new thread per connection to 
 
 For any message the server receives, it then updates its local time to ensure the local time is no smaller than the timestamp of the message (per Lamport's logic). After it finishes processing a message, the server also increments its local time to advance the clock.
 
-If the server needs to write to the file, it has to talk to other servers to ensure mutually synchronized by doing the followings:
+If the server needs to write to the file, it _has to talk to other servers to ensure mutually synchronized_ by doing the followings:
 1. Sends a Write Acquire Request message to every servers and put the message onto its queue
 2. Waits for all Write Acquire Response message from every other servers regarding the request it just sent
 3. Proceeds to critical section (write to the file)
@@ -32,7 +34,9 @@ The logic above is proven by Lamport's paper: _L. Lamport. Time, Clocks and the 
 
 ## Client communication
 
-When a client starts, it tries to create sockets to connect to all servers. Then in a loop, it does the following:
+When a client starts, it tries to create sockets to connect to all servers. Since the [hash function](#hash-function) will calculate the index from 0 to 6, it is required that all 7 servers must be supplied as parameters to the client, regardless if they are reachable or not. This requirement is necessary to allow correctness in requesting later.
+
+Then in a loop, it does the following:
 1. Randomly decides if should read or write
 2. Randomly decides the file number
 3. Runs the [algorithm](#hash-function) below to choose which server(s) to send request to
@@ -384,7 +388,9 @@ I prepared some sample configurations for the [clients](../Client/src/main/resou
 
 ![Production setup](./Img/ProductionSetup.PNG)
 
-All servers can connect to each other. Clients are partitioned into 2 groups from the get-go: clients (0, 1, 2) can connect to all servers, thus guarantee all writable, and clients (3, 4) can only connect to 2 servers as in the diagram above. For these clients, since the servers that they connect to are more than 2 "hops" apart, they are guaranteed to never be writable. You can achieve the same setup if you let all clients be able to connect to all servers at the beginning, then at the network level enable and disable the channels at will, which requires a lot of manual work to fiddle around, and timing is also critical. Since I don't have the tools (virtual environment) and resources, this is my approach.
+All servers can connect to each other. Clients are partitioned into 2 groups from the get-go: clients (0, 1, 2) can connect to all servers, thus guarantee all writable, and clients (3, 4) can only connect to 2 servers as in the diagram above. For these clients, since the servers that they connect to are more than 2 "hops" apart, they are guaranteed to never be writable. You can achieve the same setup if you let all clients be able to connect to all servers at the beginning, then at the network level enable and disable the channels at will, which requires a lot of manual work to fiddle around with very precise timing. Since I don't have the tools (virtual environment that can enable/disable the communication channels) and resources, this is my approach.
+
+Also note that channels dropping messages is not the same as nodes crashing, as if they crashed and restart they have to go through the [phases](#implementation) above, which is out of sync with the rest of the system. The requirement is not to design a fault-tolerance and recovery system - but rather just a consistent distributed file storage, so this is out of scope.
 
 _Server0_ outputs:
 ```text
