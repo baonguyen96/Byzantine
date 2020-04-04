@@ -67,7 +67,7 @@ public class ServerNode {
             return;
         }
 
-        for (int trial = 0; trial < 5; trial++) {
+        for (int trial = 0; trial < 2; trial++) {
             for (ServerInfo otherServer : this.otherServers) {
                 if (serverSockets.containsKey(otherServer.getName())) {
                     continue;
@@ -164,6 +164,11 @@ public class ServerNode {
 
                     Message responseMessage = new Message(this.info.getName(), Message.MessageType.WriteAcquireResponse, localTime, receivedMessage.getPayload());
                     Socket serverSocket = serverSockets.get(receivedMessage.getSenderName());
+
+                    while(!isSocketReachable(serverSocket)) {
+                        Thread.sleep(100);
+                    }
+
                     sendMessage(serverSocket, responseMessage.toString(), receivedMessage.getSenderName());
                 }
                 else if (receivedMessage.getType() == Message.MessageType.WriteAcquireResponse) {
@@ -229,6 +234,10 @@ public class ServerNode {
                     }
                 }
 
+                while(!isSocketReachable(socket)) {
+                    Thread.sleep(100);
+                }
+
                 sendMessage(socket, responseMessage.toString(), receivedMessage.getSenderName());
             }
             catch (Exception e) {
@@ -237,6 +246,20 @@ public class ServerNode {
         }
 
         dis.close();
+    }
+
+    private boolean isSocketReachable(Socket socket) {
+        boolean isReachable = false;
+
+        try {
+            isReachable = socket.getInetAddress().isReachable(10000);
+        }
+        catch (Exception ignored) {
+        }
+
+        logger.debug(String.format("%s can reach %s: %s", this.info.getName(), socket, isReachable));
+
+        return isReachable;
     }
 
     private boolean isServerSocket(Socket socket) throws IOException {
@@ -261,26 +284,26 @@ public class ServerNode {
     }
 
     private synchronized void addToQueue(Message message) {
-        logger.debug(String.format("Adding message '%s' to the queue", message.toString()));
-        logger.debug("Queue size before add = " + commandsQueue.size());
+        logger.debug(String.format("%s adds message '%s' to the queue", this.info.getName(), message.toString()));
+        logger.debug(String.format("%s queue size before add = %d", this.info.getName(), commandsQueue.size()));
 
         commandsQueue.add(message);
 
-        logger.debug("Queue size after add = " + commandsQueue.size());
+        logger.debug(String.format("%s queue size after add = %d", this.info.getName(), commandsQueue.size()));
     }
 
     private synchronized void removeFromQueue(Predicate<Message> filter) {
-        logger.debug("Removing messages off the queue");
-        logger.debug("Queue size before remove = " + commandsQueue.size());
+        logger.debug(String.format("%s removes messages off the queue", this.info.getName()));
+        logger.debug(String.format("%s queue size before remove = %d", this.info.getName(), commandsQueue.size()));
 
         List<Message> removingMessages = commandsQueue.stream().filter(filter).collect(Collectors.toList());
         for(Message message : removingMessages) {
-            logger.debug(String.format("Removing '%s' from the queue", message.toString()));
+            logger.debug(String.format("%s removes '%s' off the queue", this.info.getName(), message.toString()));
         }
 
         commandsQueue.removeAll(removingMessages);
 
-        logger.debug("Queue size after remove = " + commandsQueue.size());
+        logger.debug(String.format("%s queue size after remove = %d", this.info.getName(), commandsQueue.size()));
     }
 
     private boolean isMessageFirstInQueue(Message message) {
@@ -290,8 +313,8 @@ public class ServerNode {
 
         Message top = commandsQueue.peek();
 
-        logger.debug("Top of queue = " + top.toString());
-        logger.debug("Current message = " + message.toString());
+        logger.debug(String.format("%s queue top = '%s'", this.info.getName(), top.toString()));
+        logger.debug(String.format("%s current message = '%s'", this.info.getName(), message.toString()));
 
         return top.getSenderName().equals(message.getSenderName()) &&
                 top.getTimeStamp() == message.getTimeStamp();
@@ -305,20 +328,20 @@ public class ServerNode {
                 .distinct()
                 .toArray(String[]::new);
 
-        logger.debug("All senders after request = " + String.join(", ", allSendersAfterWriteRequest));
+        logger.debug(String.format("%s all senders after request = (%s)", this.info.getName(), String.join(", ", allSendersAfterWriteRequest)));
 
         return allSendersAfterWriteRequest.length >= serverSockets.size();
     }
 
     private void processCriticalSession(Message writeAcquireRequest) throws InterruptedException, IOException {
-        logger.debug(String.format("Checking allowance to proceed to critical session for message '%s'...", writeAcquireRequest.toString()));
+        logger.debug(String.format("%s check allowance to proceed to critical section for message '%s'...", this.info.getName(), writeAcquireRequest.toString()));
 
         while (!isMessageFirstInQueue(writeAcquireRequest) || !isAllConfirmToAllowEnterCriticalSession(writeAcquireRequest)) {
-            logger.debug("Waiting for critical session access...");
+            logger.debug(String.format("%s waits for critical section access...", this.info.getName()));
             Thread.sleep(100);
         }
 
-        logger.debug("Going into critical session...");
+        logger.debug(String.format("%s goes into critical section...", this.info.getName()));
 
         String fileName = writeAcquireRequest.getFileNameFromPayload();
         String lineToAppend = writeAcquireRequest.getDataFromPayload();
@@ -337,12 +360,17 @@ public class ServerNode {
         notifyAllServers(writeReleaseRequest);
         incrementLocalTime();
 
-        logger.debug("Going out of critical session access");
+        logger.debug(String.format("%s goes out of critical section...", this.info.getName()));
     }
 
-    private void notifyAllServers(Message message) throws IOException {
+    private void notifyAllServers(Message message) throws IOException, InterruptedException {
         for(String serverName : serverSockets.keySet()) {
             Socket serverSocket = serverSockets.get(serverName);
+
+            while(!isSocketReachable(serverSocket)) {
+                Thread.sleep(100);
+            }
+
             sendMessage(serverSocket, message.toString(), serverName);
         }
     }

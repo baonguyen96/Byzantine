@@ -71,13 +71,13 @@ public class ClientNode {
 
         Random random = new Random();
 
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < 20; i++) {
             boolean needToWrite = random.nextBoolean();
             int fileNumber = random.nextInt(20);
 
             if (IS_DEBUGGING) {
                 needToWrite = true;
-                fileNumber = random.nextInt(10);
+                fileNumber = random.nextInt(3);
             }
 
             Thread.sleep(random.nextInt(500));
@@ -212,6 +212,8 @@ public class ClientNode {
         }
         catch (Exception ignored) {
         }
+
+        logger.debug(String.format("%s can reach server %d: %s", this.name, serverNumber, isReachable));
 
         return isReachable;
     }

@@ -34,7 +34,7 @@ The logic above is proven by Lamport's paper: _L. Lamport. Time, Clocks and the 
 
 ## Client communication
 
-When a client starts, it tries to create sockets to connect to all servers. Since the [hash function](#hash-function) will calculate the index from 0 to 6, it is required that all 7 servers must be supplied as parameters to the client, regardless if they are reachable or not. This requirement is necessary to allow correctness in requesting later.
+When a client starts, it tries to create sockets to connect to all servers. _Since the [hash function](#hash-function) will calculate the index from 0 to 6, it is required that all 7 servers must be supplied as parameters to the client, regardless if they are reachable or not. This requirement is necessary to allow correctness in requesting later._
 
 Then in a loop, it does the following:
 1. Randomly decides if should read or write
@@ -56,6 +56,14 @@ Per this requirement:
 > Compute 3 servers numbered: H(Ok), H(Ok)+1 modulo 7, and H(Ok)+2 modulo 7
 
 The client simply uses the value `H(n)` from above to come up with these hashes per servers respectively: `H(n)`, `(H(n) + 1) mod 7`, and `(H(n) + 2) mod 7`
+
+## Safety and Liveness Conditions
+
+Note that channels dropping messages is not the same as nodes crashing, as if they crash and restart they have to go through the [phases](#implementation) above, which is out of sync with the rest of the system. The requirement is not to design a fault-tolerance and recovery system (which requires a separated error detection mechanism) - but rather just a consistent distributed file storage, so this is out of scope.
+
+Since the project does not consider hard-stop-and-restart failure, all connections must be made at the handshake phase (when node starts). **Once that phase passes (each node has a couple chances to reconnect when fail) and they start exchanging the actual request/response messages, no new connection can be made.** If a node crashes, it should not come back up and wish to rejoin the system for reasons stated above.
+
+One assumption being made is each node can detect if the target channel is disrupted BEFORE sending a message to avoid each nodes has out-of-sync messages (i.e. the sender sends the message but the recipient never receives). If the channel is disrupted, the sender will wait until the channel is good to send, then sends the message to the recipient. The checking is a simple ICMP message with minimal overhead. The protocol once detects disruption, it will wait until the channel is back online to send the message - thus assuming during the transit the message is not dropped by the channel. Another assumption (as stated in the requirement as well) is that the communication channels are only disrupted shortly and be back on again, since if the channel is down forever it is effectively the same as a node on the other end of the channel crashes, causing waiting forever. All test cases below is built upon these assumptions.
 
 # Test plan
 
@@ -207,7 +215,7 @@ private Logger logger = new Logger(Logger.LogLevel.Debug);
 Limit the flow to write-only and the file randomness:
 ```java
 if (IS_DEBUGGING) {
-    needToWrite = false;
+    needToWrite = true;
     fileNumber = random.nextInt(4);
 }
 ```
@@ -221,7 +229,7 @@ private Logger logger = new Logger(Logger.LogLevel.Debug);
 
 Follow [these steps](../README.md#how-to-run) to build and run.
 
-For this test case, I choose _client0_ to connect and write to different servers (1, 2, 3) and leave the rest off so that _client0_ won't be able to connect to them.
+For this test case, I turn on 3 _interconnected_ servers (_server1_, _server2_, and _server3_) and leave the rest off, and _client0_ can connect to all of these 3 servers only.
 
 _Sample client's console:_
 ```text
@@ -361,9 +369,216 @@ Here is a screenshot of the generated files from the servers. Note that each fil
 
 The workflow for multiple clients requesting write concurrently is essentially the same compare to the previous flow. The server uses the same idea to logically ordered messages and ensures all copies of the files have the same order.
 
-I still use the same settings as the previous test, except that this time I enable 3 clients: _client0_, _client1_, and _client2_.
+This time I still use _server1, _server2_, _server3_, but they are not connected to each other. This resembles the disconnection among servers, and some disrupted channels between clients and servers. The expected output of this test case is __none__ of the servers will be synchronized, since they cannot talk to each other. _server1_ receives updates from both clients, while _server2_ and _server3_ each only receives update from a unique client.
 
-![Multiple client writes](./Img/MultipleClientWritesOutput.PNG)
+![Multiple clients write setup](./Img/MultipleClientsWriteSetup.PNG)
+
+[ClientNode](../Client/src/main/java/ClientNode.java):
+
+Turn on Debug mode by the following setting:
+```java
+private final boolean IS_DEBUGGING = true;
+private Logger logger = new Logger(Logger.LogLevel.Debug);
+```
+
+Limit the flow to write-only and the file randomness:
+```java
+if (IS_DEBUGGING) {
+    needToWrite = true;
+    fileNumber = random.nextInt(3);
+}
+```
+
+[ServerNode](../Server/src/main/java/ServerNode.java):
+
+Turn off Debug mode by the following setting (since the output is similar to the one above, and the debug console is very long):
+```java
+private Logger logger = new Logger(Logger.LogLevel.Release);
+```
+
+Follow [these steps](../README.md#how-to-run) to build and run.
+
+_Server1's console:_
+```text
+> server1 starts listening on (localhost:1371)... at time: 2020-04-04 at 10:43:41.165 CDT
+> server1 receives 'client0|ClientWriteRequest|1|File1.txt|client0 message #0' from client0 at time: 2020-04-04 at 10:44:50.440 CDT
+> server1 appends 'client0 message #0' to file 'File1.txt' at time: 2020-04-04 at 10:44:50.443 CDT
+> server1 sends 'server1|WriteSuccessAck|7|' to client0 at time: 2020-04-04 at 10:44:50.446 CDT
+> server1 receives 'client0|ClientWriteRequest|19|File1.txt|client0 message #3' from client0 at time: 2020-04-04 at 10:44:50.604 CDT
+> server1 appends 'client0 message #3' to file 'File1.txt' at time: 2020-04-04 at 10:44:50.605 CDT
+> server1 sends 'server1|WriteSuccessAck|25|' to client0 at time: 2020-04-04 at 10:44:50.606 CDT
+> server1 receives 'client1|ClientWriteRequest|1|File1.txt|client1 message #0' from client1 at time: 2020-04-04 at 10:44:51.100 CDT
+> server1 appends 'client1 message #0' to file 'File1.txt' at time: 2020-04-04 at 10:44:51.101 CDT
+> server1 sends 'server1|WriteSuccessAck|30|' to client1 at time: 2020-04-04 at 10:44:51.102 CDT
+> server1 receives 'client1|ClientWriteRequest|42|File1.txt|client1 message #1' from client1 at time: 2020-04-04 at 10:44:51.395 CDT
+> server1 appends 'client1 message #1' to file 'File1.txt' at time: 2020-04-04 at 10:44:51.395 CDT
+> server1 sends 'server1|WriteSuccessAck|48|' to client1 at time: 2020-04-04 at 10:44:51.396 CDT
+> server1 receives 'client0|ClientWriteRequest|37|File1.txt|client0 message #6' from client0 at time: 2020-04-04 at 10:44:51.455 CDT
+> server1 appends 'client0 message #6' to file 'File1.txt' at time: 2020-04-04 at 10:44:51.456 CDT
+> server1 sends 'server1|WriteSuccessAck|53|' to client0 at time: 2020-04-04 at 10:44:51.456 CDT
+> server1 receives 'client1|ClientWriteRequest|60|File1.txt|client1 message #2' from client1 at time: 2020-04-04 at 10:44:51.585 CDT
+> server1 appends 'client1 message #2' to file 'File1.txt' at time: 2020-04-04 at 10:44:51.585 CDT
+> server1 sends 'server1|WriteSuccessAck|66|' to client1 at time: 2020-04-04 at 10:44:51.585 CDT
+> server1 receives 'client1|ClientWriteRequest|78|File0.txt|client1 message #3' from client1 at time: 2020-04-04 at 10:44:51.672 CDT
+> server1 appends 'client1 message #3' to file 'File0.txt' at time: 2020-04-04 at 10:44:51.673 CDT
+> server1 sends 'server1|WriteSuccessAck|84|' to client1 at time: 2020-04-04 at 10:44:51.673 CDT
+> server1 receives 'client0|ClientWriteRequest|65|File1.txt|client0 message #9' from client0 at time: 2020-04-04 at 10:44:51.977 CDT
+> server1 appends 'client0 message #9' to file 'File1.txt' at time: 2020-04-04 at 10:44:51.978 CDT
+> server1 sends 'server1|WriteSuccessAck|89|' to client0 at time: 2020-04-04 at 10:44:51.978 CDT
+> server1 receives 'client1|ClientWriteRequest|96|File1.txt|client1 message #4' from client1 at time: 2020-04-04 at 10:44:52.035 CDT
+> server1 appends 'client1 message #4' to file 'File1.txt' at time: 2020-04-04 at 10:44:52.035 CDT
+> server1 sends 'server1|WriteSuccessAck|102|' to client1 at time: 2020-04-04 at 10:44:52.035 CDT
+> server1 receives 'client1|ClientWriteRequest|114|File1.txt|client1 message #5' from client1 at time: 2020-04-04 at 10:44:52.471 CDT
+> server1 appends 'client1 message #5' to file 'File1.txt' at time: 2020-04-04 at 10:44:52.471 CDT
+> server1 sends 'server1|WriteSuccessAck|120|' to client1 at time: 2020-04-04 at 10:44:52.472 CDT
+> server1 receives 'client1|ClientWriteRequest|132|File1.txt|client1 message #7' from client1 at time: 2020-04-04 at 10:44:52.807 CDT
+> server1 appends 'client1 message #7' to file 'File1.txt' at time: 2020-04-04 at 10:44:52.808 CDT
+> server1 sends 'server1|WriteSuccessAck|138|' to client1 at time: 2020-04-04 at 10:44:52.808 CDT
+> server1 receives 'client1|ClientWriteRequest|150|File0.txt|client1 message #8' from client1 at time: 2020-04-04 at 10:44:53.026 CDT
+> server1 appends 'client1 message #8' to file 'File0.txt' at time: 2020-04-04 at 10:44:53.026 CDT
+> server1 sends 'server1|WriteSuccessAck|156|' to client1 at time: 2020-04-04 at 10:44:53.027 CDT
+> server1 receives 'client1|ClientWriteRequest|168|File0.txt|client1 message #9' from client1 at time: 2020-04-04 at 10:44:53.438 CDT
+> server1 appends 'client1 message #9' to file 'File0.txt' at time: 2020-04-04 at 10:44:53.438 CDT
+> server1 sends 'server1|WriteSuccessAck|174|' to client1 at time: 2020-04-04 at 10:44:53.439 CDT
+```
+
+_Server1_ receives write requests from both clients, no other servers can communicate with it.
+
+_Server2's console:__
+```text
+> server2 starts listening on (localhost:1372)... at time: 2020-04-04 at 10:43:51.799 CDT
+> server2 receives 'client1|ClientWriteRequest|33|File1.txt|client1 message #0' from client1 at time: 2020-04-04 at 10:44:51.104 CDT
+> server2 appends 'client1 message #0' to file 'File1.txt' at time: 2020-04-04 at 10:44:51.108 CDT
+> server2 sends 'server2|WriteSuccessAck|39|' to client1 at time: 2020-04-04 at 10:44:51.110 CDT
+> server2 receives 'client1|ClientWriteRequest|51|File1.txt|client1 message #1' from client1 at time: 2020-04-04 at 10:44:51.397 CDT
+> server2 appends 'client1 message #1' to file 'File1.txt' at time: 2020-04-04 at 10:44:51.397 CDT
+> server2 sends 'server2|WriteSuccessAck|57|' to client1 at time: 2020-04-04 at 10:44:51.398 CDT
+> server2 receives 'client1|ClientWriteRequest|69|File1.txt|client1 message #2' from client1 at time: 2020-04-04 at 10:44:51.585 CDT
+> server2 appends 'client1 message #2' to file 'File1.txt' at time: 2020-04-04 at 10:44:51.587 CDT
+> server2 sends 'server2|WriteSuccessAck|75|' to client1 at time: 2020-04-04 at 10:44:51.587 CDT
+> server2 receives 'client1|ClientWriteRequest|87|File0.txt|client1 message #3' from client1 at time: 2020-04-04 at 10:44:51.674 CDT
+> server2 appends 'client1 message #3' to file 'File0.txt' at time: 2020-04-04 at 10:44:51.674 CDT
+> server2 sends 'server2|WriteSuccessAck|93|' to client1 at time: 2020-04-04 at 10:44:51.676 CDT
+> server2 receives 'client1|ClientWriteRequest|105|File1.txt|client1 message #4' from client1 at time: 2020-04-04 at 10:44:52.036 CDT
+> server2 appends 'client1 message #4' to file 'File1.txt' at time: 2020-04-04 at 10:44:52.037 CDT
+> server2 sends 'server2|WriteSuccessAck|111|' to client1 at time: 2020-04-04 at 10:44:52.037 CDT
+> server2 receives 'client1|ClientWriteRequest|123|File1.txt|client1 message #5' from client1 at time: 2020-04-04 at 10:44:52.472 CDT
+> server2 appends 'client1 message #5' to file 'File1.txt' at time: 2020-04-04 at 10:44:52.473 CDT
+> server2 sends 'server2|WriteSuccessAck|129|' to client1 at time: 2020-04-04 at 10:44:52.473 CDT
+> server2 receives 'client1|ClientWriteRequest|141|File1.txt|client1 message #7' from client1 at time: 2020-04-04 at 10:44:52.809 CDT
+> server2 appends 'client1 message #7' to file 'File1.txt' at time: 2020-04-04 at 10:44:52.809 CDT
+> server2 sends 'server2|WriteSuccessAck|147|' to client1 at time: 2020-04-04 at 10:44:52.810 CDT
+> server2 receives 'client1|ClientWriteRequest|159|File0.txt|client1 message #8' from client1 at time: 2020-04-04 at 10:44:53.028 CDT
+> server2 appends 'client1 message #8' to file 'File0.txt' at time: 2020-04-04 at 10:44:53.028 CDT
+> server2 sends 'server2|WriteSuccessAck|165|' to client1 at time: 2020-04-04 at 10:44:53.029 CDT
+> server2 receives 'client1|ClientWriteRequest|177|File0.txt|client1 message #9' from client1 at time: 2020-04-04 at 10:44:53.440 CDT
+> server2 appends 'client1 message #9' to file 'File0.txt' at time: 2020-04-04 at 10:44:53.441 CDT
+> server2 sends 'server2|WriteSuccessAck|183|' to client1 at time: 2020-04-04 at 10:44:53.441 CDT
+```
+
+_Server2_ only communicates with _client1_, without forwarding the message to sync with any other servers.
+
+_Server3's console:__
+```text
+> server3 starts listening on (localhost:1373)... at time: 2020-04-04 at 10:44:04.401 CDT
+> server3 receives 'client0|ClientWriteRequest|10|File1.txt|client0 message #0' from client0 at time: 2020-04-04 at 10:44:50.449 CDT
+> server3 appends 'client0 message #0' to file 'File1.txt' at time: 2020-04-04 at 10:44:50.453 CDT
+> server3 sends 'server3|WriteSuccessAck|16|' to client0 at time: 2020-04-04 at 10:44:50.455 CDT
+> server3 receives 'client0|ClientWriteRequest|28|File1.txt|client0 message #3' from client0 at time: 2020-04-04 at 10:44:50.606 CDT
+> server3 appends 'client0 message #3' to file 'File1.txt' at time: 2020-04-04 at 10:44:50.607 CDT
+> server3 sends 'server3|WriteSuccessAck|34|' to client0 at time: 2020-04-04 at 10:44:50.607 CDT
+> server3 receives 'client0|ClientWriteRequest|56|File1.txt|client0 message #6' from client0 at time: 2020-04-04 at 10:44:51.457 CDT
+> server3 appends 'client0 message #6' to file 'File1.txt' at time: 2020-04-04 at 10:44:51.458 CDT
+> server3 sends 'server3|WriteSuccessAck|62|' to client0 at time: 2020-04-04 at 10:44:51.459 CDT
+> server3 receives 'client0|ClientWriteRequest|92|File1.txt|client0 message #9' from client0 at time: 2020-04-04 at 10:44:51.979 CDT
+> server3 appends 'client0 message #9' to file 'File1.txt' at time: 2020-04-04 at 10:44:51.979 CDT
+> server3 sends 'server3|WriteSuccessAck|98|' to client0 at time: 2020-04-04 at 10:44:51.980 CDT
+```
+
+_Server3_ only communicates with _client0_, without forwarding the message to sync with any other servers.
+
+_Client0's console:_
+```text
+> client0 successfully connects to 2 server(s): (server1, server3) at time: 2020-04-04 at 10:44:50.002 CDT
+> client0 starts at time: 2020-04-04 at 10:44:50.002 CDT
+> client0 sends 'client0|ClientWriteRequest|1|File1.txt|client0 message #0' to server1 at time: 2020-04-04 at 10:44:50.438 CDT
+> client0 receives 'server1|WriteSuccessAck|7|' from server1 at time: 2020-04-04 at 10:44:50.447 CDT
+> client0 sends 'client0|ClientWriteRequest|10|File1.txt|client0 message #0' to server3 at time: 2020-04-04 at 10:44:50.448 CDT
+> client0 receives 'server3|WriteSuccessAck|16|' from server3 at time: 2020-04-04 at 10:44:50.456 CDT
+> client0: Cannot write to 'File0.txt' because of too many (2) unreachable servers (server0, server2) at time: 2020-04-04 at 10:44:50.535 CDT
+> client0: Cannot write to 'File2.txt' because of too many (2) unreachable servers (server2, server4) at time: 2020-04-04 at 10:44:50.575 CDT
+> client0 sends 'client0|ClientWriteRequest|19|File1.txt|client0 message #3' to server1 at time: 2020-04-04 at 10:44:50.604 CDT
+> client0 receives 'server1|WriteSuccessAck|25|' from server1 at time: 2020-04-04 at 10:44:50.606 CDT
+> client0 sends 'client0|ClientWriteRequest|28|File1.txt|client0 message #3' to server3 at time: 2020-04-04 at 10:44:50.606 CDT
+> client0 receives 'server3|WriteSuccessAck|34|' from server3 at time: 2020-04-04 at 10:44:50.608 CDT
+> client0: Cannot write to 'File2.txt' because of too many (2) unreachable servers (server2, server4) at time: 2020-04-04 at 10:44:51.070 CDT
+> client0: Cannot write to 'File2.txt' because of too many (2) unreachable servers (server2, server4) at time: 2020-04-04 at 10:44:51.221 CDT
+> client0 sends 'client0|ClientWriteRequest|37|File1.txt|client0 message #6' to server1 at time: 2020-04-04 at 10:44:51.455 CDT
+> client0 receives 'server1|WriteSuccessAck|53|' from server1 at time: 2020-04-04 at 10:44:51.457 CDT
+> client0 sends 'client0|ClientWriteRequest|56|File1.txt|client0 message #6' to server3 at time: 2020-04-04 at 10:44:51.457 CDT
+> client0 receives 'server3|WriteSuccessAck|62|' from server3 at time: 2020-04-04 at 10:44:51.459 CDT
+> client0: Cannot write to 'File0.txt' because of too many (2) unreachable servers (server0, server2) at time: 2020-04-04 at 10:44:51.817 CDT
+> client0: Cannot write to 'File2.txt' because of too many (2) unreachable servers (server2, server4) at time: 2020-04-04 at 10:44:51.976 CDT
+> client0 sends 'client0|ClientWriteRequest|65|File1.txt|client0 message #9' to server1 at time: 2020-04-04 at 10:44:51.977 CDT
+> client0 receives 'server1|WriteSuccessAck|89|' from server1 at time: 2020-04-04 at 10:44:51.978 CDT
+> client0 sends 'client0|ClientWriteRequest|92|File1.txt|client0 message #9' to server3 at time: 2020-04-04 at 10:44:51.978 CDT
+> client0 receives 'server3|WriteSuccessAck|98|' from server3 at time: 2020-04-04 at 10:44:51.980 CDT
+> client0 gracefully exits at time: 2020-04-04 at 10:44:51.980 CDT
+```
+
+_Client0_ requests random write to random servers. Occasionally it will fail due to too many unreachable servers to write (i.e. write request for _File0.txt_ and _File2.txt_).
+
+_Client1's console_:
+```text
+> client1 successfully connects to 2 server(s): (server1, server2) at time: 2020-04-04 at 10:44:50.973 CDT
+> client1 starts at time: 2020-04-04 at 10:44:50.973 CDT
+> client1 sends 'client1|ClientWriteRequest|1|File1.txt|client1 message #0' to server1 at time: 2020-04-04 at 10:44:51.100 CDT
+> client1 receives 'server1|WriteSuccessAck|30|' from server1 at time: 2020-04-04 at 10:44:51.102 CDT
+> client1 sends 'client1|ClientWriteRequest|33|File1.txt|client1 message #0' to server2 at time: 2020-04-04 at 10:44:51.102 CDT
+> client1 receives 'server2|WriteSuccessAck|39|' from server2 at time: 2020-04-04 at 10:44:51.110 CDT
+> client1 sends 'client1|ClientWriteRequest|42|File1.txt|client1 message #1' to server1 at time: 2020-04-04 at 10:44:51.394 CDT
+> client1 receives 'server1|WriteSuccessAck|48|' from server1 at time: 2020-04-04 at 10:44:51.396 CDT
+> client1 sends 'client1|ClientWriteRequest|51|File1.txt|client1 message #1' to server2 at time: 2020-04-04 at 10:44:51.396 CDT
+> client1 receives 'server2|WriteSuccessAck|57|' from server2 at time: 2020-04-04 at 10:44:51.398 CDT
+> client1 sends 'client1|ClientWriteRequest|60|File1.txt|client1 message #2' to server1 at time: 2020-04-04 at 10:44:51.584 CDT
+> client1 receives 'server1|WriteSuccessAck|66|' from server1 at time: 2020-04-04 at 10:44:51.585 CDT
+> client1 sends 'client1|ClientWriteRequest|69|File1.txt|client1 message #2' to server2 at time: 2020-04-04 at 10:44:51.585 CDT
+> client1 receives 'server2|WriteSuccessAck|75|' from server2 at time: 2020-04-04 at 10:44:51.587 CDT
+> client1 sends 'client1|ClientWriteRequest|78|File0.txt|client1 message #3' to server1 at time: 2020-04-04 at 10:44:51.672 CDT
+> client1 receives 'server1|WriteSuccessAck|84|' from server1 at time: 2020-04-04 at 10:44:51.673 CDT
+> client1 sends 'client1|ClientWriteRequest|87|File0.txt|client1 message #3' to server2 at time: 2020-04-04 at 10:44:51.673 CDT
+> client1 receives 'server2|WriteSuccessAck|93|' from server2 at time: 2020-04-04 at 10:44:51.676 CDT
+> client1 sends 'client1|ClientWriteRequest|96|File1.txt|client1 message #4' to server1 at time: 2020-04-04 at 10:44:52.034 CDT
+> client1 receives 'server1|WriteSuccessAck|102|' from server1 at time: 2020-04-04 at 10:44:52.036 CDT
+> client1 sends 'client1|ClientWriteRequest|105|File1.txt|client1 message #4' to server2 at time: 2020-04-04 at 10:44:52.036 CDT
+> client1 receives 'server2|WriteSuccessAck|111|' from server2 at time: 2020-04-04 at 10:44:52.037 CDT
+> client1 sends 'client1|ClientWriteRequest|114|File1.txt|client1 message #5' to server1 at time: 2020-04-04 at 10:44:52.470 CDT
+> client1 receives 'server1|WriteSuccessAck|120|' from server1 at time: 2020-04-04 at 10:44:52.472 CDT
+> client1 sends 'client1|ClientWriteRequest|123|File1.txt|client1 message #5' to server2 at time: 2020-04-04 at 10:44:52.472 CDT
+> client1 receives 'server2|WriteSuccessAck|129|' from server2 at time: 2020-04-04 at 10:44:52.473 CDT
+> client1: Cannot write to 'File2.txt' because of too many (2) unreachable servers (server3, server4) at time: 2020-04-04 at 10:44:52.725 CDT
+> client1 sends 'client1|ClientWriteRequest|132|File1.txt|client1 message #7' to server1 at time: 2020-04-04 at 10:44:52.807 CDT
+> client1 receives 'server1|WriteSuccessAck|138|' from server1 at time: 2020-04-04 at 10:44:52.808 CDT
+> client1 sends 'client1|ClientWriteRequest|141|File1.txt|client1 message #7' to server2 at time: 2020-04-04 at 10:44:52.809 CDT
+> client1 receives 'server2|WriteSuccessAck|147|' from server2 at time: 2020-04-04 at 10:44:52.810 CDT
+> client1 sends 'client1|ClientWriteRequest|150|File0.txt|client1 message #8' to server1 at time: 2020-04-04 at 10:44:53.025 CDT
+> client1 receives 'server1|WriteSuccessAck|156|' from server1 at time: 2020-04-04 at 10:44:53.027 CDT
+> client1 sends 'client1|ClientWriteRequest|159|File0.txt|client1 message #8' to server2 at time: 2020-04-04 at 10:44:53.027 CDT
+> client1 receives 'server2|WriteSuccessAck|165|' from server2 at time: 2020-04-04 at 10:44:53.029 CDT
+> client1 sends 'client1|ClientWriteRequest|168|File0.txt|client1 message #9' to server1 at time: 2020-04-04 at 10:44:53.438 CDT
+> client1 receives 'server1|WriteSuccessAck|174|' from server1 at time: 2020-04-04 at 10:44:53.440 CDT
+> client1 sends 'client1|ClientWriteRequest|177|File0.txt|client1 message #9' to server2 at time: 2020-04-04 at 10:44:53.440 CDT
+> client1 receives 'server2|WriteSuccessAck|183|' from server2 at time: 2020-04-04 at 10:44:53.441 CDT
+> client1 gracefully exits at time: 2020-04-04 at 10:44:53.441 CDT
+```
+
+_Client1_ requests random write to random servers. Occasionally it will fail due to too many unreachable servers to write (i.e. write request for _File2.txt_).
+
+Screenshot of output, as expected that the servers are not synchronized (same file has different contents, and different servers may contain different files):
+
+![Multiple clients write output](./Img/MultipleClientsWriteOutput.PNG)
+
+If we were having other clients trying to read _File1.txt_, they may not read the same version of that file depending on which server they read from. Moreover, they may even have read failure acknowledgement when trying to read _File0.txt_ since it does not exist.
 
 # Production
 
@@ -389,8 +604,6 @@ I prepared some sample configurations for the [clients](../Client/src/main/resou
 ![Production setup](./Img/ProductionSetup.PNG)
 
 All servers can connect to each other. Clients are partitioned into 2 groups from the get-go: clients (0, 1, 2) can connect to all servers, thus guarantee all writable, and clients (3, 4) can only connect to 2 servers as in the diagram above. For these clients, since the servers that they connect to are more than 2 "hops" apart, they are guaranteed to never be writable. You can achieve the same setup if you let all clients be able to connect to all servers at the beginning, then at the network level enable and disable the channels at will, which requires a lot of manual work to fiddle around with very precise timing. Since I don't have the tools (virtual environment that can enable/disable the communication channels) and resources, this is my approach.
-
-Also note that channels dropping messages is not the same as nodes crashing, as if they crashed and restart they have to go through the [phases](#implementation) above, which is out of sync with the rest of the system. The requirement is not to design a fault-tolerance and recovery system - but rather just a consistent distributed file storage, so this is out of scope.
 
 _Server0_ outputs:
 ```text
